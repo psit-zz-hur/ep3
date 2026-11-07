@@ -10,6 +10,7 @@ import { buildMap } from './map.js';
 import { buildDiver } from './diver.js';
 import { buildPlaques } from './plaques.js';
 import { buildDiscovery } from './discovery.js';
+import { loadWarehouseModel } from './model.js';
 
 const canvas = document.getElementById('c');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer: true });
@@ -69,6 +70,7 @@ if (q.get('dome') === '1') dome.state.enabled = true;
 if (q.get('grid') === '1') dome.state.gridMix = 0.85;
 if (q.get('map') === '1') map.toggle();
 if (q.has('tilt')) dome.state.tiltDeg = parseFloat(q.get('tilt'));
+if (q.get('model') === '1') loadWarehouseModel(scene);
 if (q.get('nohud') === '1') { hud.style.display = 'none'; help.style.display = 'none'; clickEl.style.display = 'none'; document.getElementById('title').style.display = 'none'; }
 
 const clock = new THREE.Clock(); let acc = 0;

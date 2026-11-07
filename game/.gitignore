@@ -1,2 +1,5 @@
 node_modules/
 package-lock.json
+assets/cas_3dwarehouse.glb
+assets/*.kmz
+assets/*.skp

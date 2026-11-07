@@ -52,11 +52,18 @@ reserved (reference only; do not redistribute), CC = Creative Commons (check per
 ## E. 3D models (MANUAL)
 | # | Item | URL | Notes |
 |---|---|---|---|
-| E1 | 3D Warehouse Cal Academy (3,694 polys, 2014) | https://3dwarehouse.sketchup.com/model/1a4c209a43561ba445f5590ac69325a5/California-Academy-of-Sciences | free Trimble account; SKP/DAE |
+| E1 | 3D Warehouse Cal Academy (legacy Google Earth model; 3,694 polys, 27 materials, georeferenced, SketchUp 8, includes ~800 m of site context; metadata verified 7 Nov 2026, download not restricted) | https://3dwarehouse.sketchup.com/model/1a4c209a43561ba445f5590ac69325a5/California-Academy-of-Sciences | free Trimble account, manual download in the browser (SKP, KMZ/Collada, GLB, USDZ offered). Save the GLB as `game/assets/cas_3dwarehouse.glb` and open the game with `?model=1`; tune `MODEL_ALIGN` in `game/src/model.js`. License: 3D Warehouse General Model License (use in your own work, no redistribution), so keep it out of the repo. |
 | E2 | Google Photorealistic 3D Tiles | https://tile.googleapis.com/v1/3dtiles/root.json?key=API_KEY | stream only, no export |
 | E3 | Cesium OSM Buildings (ion 96188) | https://cesium.com/platform/cesium-ion/content/cesium-osm-buildings/ | free account |
 | E4 | Open City Model SF (LOD1 CityJSON) | https://s3.dualstack.us-east-1.amazonaws.com/opencitymodel/2019-jun/json/California/06075/ | ODbL |
 | E5 | NASA WERK 1 m DSM SF 2023 | https://wifire-data.sdsc.edu/dataset/nasa-werk-dem-ca-sanfrancisco-1-b23 | COG |
+
+## E2. Academy "3D Model Download Request" form (not the building)
+https://www.calacademy.org/3d-model-download-request is the gate for the Academy's **specimen scans** (the
+700+ Sketchfab models): the Model field is an autocomplete over the specimen taxonomy, and the licensing terms
+(https://www.calacademy.org/3d-model-licensing-terms) require Darwin Core triplet citation (e.g. CAS:HERP:12345)
+and the media DOI/ARK, non-commercial use without written approval, and no redistribution. Useful for exhibit
+props (skulls, shells, taxidermy) in the game, not for the building.
 
 ## F. Museum data (API, no download needed)
 See 05-museum-data-and-apis.md: GBIF publisher 66522820-055c-11d8-b84e-b8a03c50a862; iNaturalist radius queries; USGS earthquake GeoJSON; NOAA tides 9414290; NWS points API; eBird hotspot L109439; ProPublica 990 EIN 94-1156258.
