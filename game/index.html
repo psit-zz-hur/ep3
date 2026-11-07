@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Freeswim Fridays</title>
+<style>
+  :root { color-scheme: dark; }
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; font: 12px/1.4 ui-monospace, Menlo, monospace; color: #cfe; }
+  #c { display: block; width: 100%; height: 100%; }
+  #hud { position: fixed; left: 12px; top: 10px; pointer-events: none; white-space: pre; text-shadow: 0 1px 2px #000; opacity: .9; }
+  #help { position: fixed; right: 12px; top: 10px; pointer-events: none; white-space: pre; text-shadow: 0 1px 2px #000; opacity: .75; }
+  #title { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); pointer-events: none; letter-spacing: .25em; opacity: .6; }
+  #click { position: fixed; inset: 0; display: grid; place-items: center; background: rgba(0,0,0,.55); cursor: pointer; font-size: 14px; letter-spacing: .2em; }
+  #click.hidden { display: none; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hud"></div>
+<div id="help"></div>
+<div id="title">FREESWIM FRIDAYS · CAL ACADEMY · DESIGN FICTION</div>
+<div id="click">CLICK TO ENTER · F floods the building · D dome view</div>
+<script type="importmap">
+{ "imports": { "three": "./vendor/three/three.module.js", "three/addons/": "./vendor/three/addons/" } }
+</script>
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>
