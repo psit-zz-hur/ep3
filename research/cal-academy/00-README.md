@@ -37,3 +37,9 @@ switched and warped (sphere-inverted "planet", exotic cameras) in a Three.js exp
 This session's cloud environment "ep3 (architecture research)" has an allowlist of the hosts used here.
 The View / The Territory code is not in this repository, so formats were chosen to be generic
 (PLY/SPZ splats, GLB meshes, COPC/LAZ point clouds, GeoTIFF rasters, GeoJSON vectors).
+
+## Renders added during the visit
+- renders/cas_lidar_2010_dsm.png — 2010 NOAA/USGS lidar DSM at 1 m (de Young, concourse, Academy).
+- renders/cas_change_2010_2023.png — 2023 minus 2010 surface height; the roof is stable, park trees grew 5-8 m.
+- Historic imagery fetched via David Rumsey IIIF (CC BY-NC-SA, kept out of the repo): 1896 Blum park map;
+  Aug 1948 aerial survey sheet 131 showing the old Academy campus and de Young. URLs are in 02-downloads-manifest.md.
