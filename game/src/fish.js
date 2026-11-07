@@ -16,6 +16,7 @@ const LAYER_Y = { sunlit: [-2, 8.5], mid: [-6.5, 8.5], floor: [-7.2, -0.3], twil
 function fishGeometry(kind, size, shape) {
   shape = shape || (kind === 'ray' ? 'flat-ray' : kind === 'shark' ? 'shark' : 'fusiform');
   if (shape === 'flat-ray') { const g = new THREE.CircleGeometry(size, 14); g.rotateX(-Math.PI / 2); g.scale(1, 1, 1.3); const t = new THREE.CylinderGeometry(0.02 * size, 0.01 * size, size * 1.2, 5); t.rotateX(Math.PI / 2); t.translate(0, 0, -size * 1.1); return mergeGeos([g, t]); }
+  if (shape === 'sessile') { const g = new THREE.IcosahedronGeometry(size * 0.5, 1); g.scale(1, 0.7, 1); return g; }
   if (shape === 'eel') { const g = new THREE.CylinderGeometry(size * 0.06, size * 0.03, size, 6); g.rotateX(Math.PI / 2); return g; }
   if (shape === 'compressed-oval') { const g = new THREE.SphereGeometry(size * 0.5, 10, 8); g.scale(0.22, 1.0, 1.0); const tail = new THREE.ConeGeometry(size * 0.25, size * 0.3, 4); tail.rotateX(-Math.PI / 2); tail.scale(0.3, 1, 1); tail.translate(0, 0, -size * 0.55); return mergeGeos([g, tail]); }
   if (shape === 'elongate') { const g = new THREE.CylinderGeometry(size * 0.09, size * 0.04, size, 7); g.rotateX(Math.PI / 2); const tail = new THREE.ConeGeometry(size * 0.12, size * 0.25, 4); tail.rotateX(-Math.PI / 2); tail.translate(0, 0, -size * 0.58); return mergeGeos([g, tail]); }
@@ -36,12 +37,17 @@ function mergeGeos(gs) {
 export async function buildFish(scene) {
   const data = await (await fetch('./assets/species.json')).json();
   const groups = [];
+  const dummy = new THREE.Object3D(); const tmp = new THREE.Vector3(), tmp2 = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
   for (const sp of data.species) {
     const geo = fishGeometry(sp.kind, sp.size, sp.shape);
     const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color(sp.color), roughness: 0.6, metalness: 0.15, emissive: new THREE.Color(sp.color), emissiveIntensity: sp.glow ? 0.9 : 0.22, flatShading: true });
     const mesh = new THREE.InstancedMesh(geo, mat, sp.count); mesh.frustumCulled = false; mesh.visible = false; scene.add(mesh);
-    const home = HOMES[sp.home](); const [ymin, ymax] = LAYER_Y[sp.layer];
+    const home = HOMES[sp.home](); const [ymin, ymax] = LAYER_Y[sp.layer] || LAYER_Y.any;
     const pos = [], vel = [];
+    if (sp.kind === 'sessile') {
+      for (let i = 0; i < sp.count; i++) { const p = new THREE.Vector3(L.reefTank.x + (Math.random() - 0.5) * (L.reefTank.w - 2), L.reefTank.bottom + 0.2 + Math.random() * 1.5, L.reefTank.z + (Math.random() - 0.5) * (L.reefTank.d - 2)); pos.push(p); vel.push(new THREE.Vector3()); dummy.position.copy(p); dummy.rotation.set(0, Math.random() * 6.28, 0); dummy.updateMatrix(); mesh.setMatrixAt(i, dummy.matrix); }
+      mesh.visible = true; groups.push({ sp, mesh, pos, vel, home, ymin, ymax, phase: 0, sessile: true }); continue;
+    }
     for (let i = 0; i < sp.count; i++) {
       pos.push(new THREE.Vector3(home.x + (Math.random() - 0.5) * 10, THREE.MathUtils.clamp(home.y + (Math.random() - 0.5) * 3, ymin, ymax), home.z + (Math.random() - 0.5) * 8));
       vel.push(new THREE.Vector3((Math.random() - 0.5), (Math.random() - 0.5) * 0.3, (Math.random() - 0.5)).normalize().multiplyScalar(sp.speed * 0.6));
@@ -51,11 +57,10 @@ export async function buildFish(scene) {
     if (sp.home === 'amazon') bounds = { cx: L.amazon.x, cz: L.amazon.z, r: L.amazon.r - 0.6, y0: L.amazon.bottom + 0.4, y1: L.amazon.top - 0.3 };
     groups.push({ sp, mesh, pos, vel, home, ymin, ymax, phase: Math.random() * 10, bounds });
   }
-  const dummy = new THREE.Object3D(); const tmp = new THREE.Vector3(), tmp2 = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
-
   function update(dt, waterY, player, t) {
     const released = waterY > -1.0; // tanks' glass "retracts" once the main floor is under water
     for (const g of groups) {
+      if (g.sessile) continue;
       const { sp, pos, vel, home, ymin, ymax, bounds } = g;
       g.mesh.visible = bounds ? true : waterY > L.levels.aquarium + 0.5;
       const ceil = Math.min(ymax, waterY - 0.4);

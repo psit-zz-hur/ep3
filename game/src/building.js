@@ -74,6 +74,16 @@ export function buildInterior(scene) {
   // Planetarium: opaque sphere shell, interior is the dome screen (flooded in the fiction)
   const pl = new THREE.Mesh(new THREE.SphereGeometry(L.domeR, 48, 32), M.domeShell); pl.position.set(L.planetarium.x, L.planetarium.y, L.planetarium.z); g.add(pl);
   const plScreen = new THREE.Mesh(new THREE.SphereGeometry(L.domeR - 0.5, 48, 32), M.domeScreen); plScreen.position.copy(pl.position); g.add(plScreen);
+  // planetarium interior: seating floor, a ring of seats, and the show (star field + a drifting nebula) on the screen
+  const plFloor = new THREE.Mesh(new THREE.CylinderGeometry(12.5, 12.5, 0.3, 48), M.dark); plFloor.position.set(L.planetarium.x, -0.9, L.planetarium.z); g.add(plFloor);
+  const seatGeo = new THREE.BoxGeometry(0.6, 0.9, 0.6); const seats = new THREE.InstancedMesh(seatGeo, new THREE.MeshStandardMaterial({ color: 0x5a2a3a, roughness: 0.9 }), 290); let si = 0; const sm = new THREE.Matrix4();
+  for (let row = 0; row < 9 && si < 290; row++) { const r = 3 + row * 1.1, n = Math.floor(r * 2.2); for (let k = 0; k < n && si < 290; k++) { const a = -Math.PI * 0.7 + (k / (n - 1)) * Math.PI * 1.4; sm.makeTranslation(L.planetarium.x + Math.sin(a) * r, -0.3 + row * 0.25, L.planetarium.z - Math.cos(a) * r); seats.setMatrixAt(si++, sm); } }
+  seats.count = si; g.add(seats);
+  const starN = 2500; const sp = new Float32Array(starN * 3); const sc = new Float32Array(starN * 3);
+  for (let i = 0; i < starN; i++) { const u = Math.random(), v = Math.random(); const th = Math.acos(1 - u * 1.05), ph = v * Math.PI * 2; const r = L.domeR - 0.8; sp[i * 3] = L.planetarium.x + r * Math.sin(th) * Math.cos(ph); sp[i * 3 + 1] = L.planetarium.y + r * Math.cos(th); sp[i * 3 + 2] = L.planetarium.z + r * Math.sin(th) * Math.sin(ph); const b = 0.5 + Math.random() * 0.5; sc[i * 3] = b; sc[i * 3 + 1] = b; sc[i * 3 + 2] = b * (0.9 + Math.random() * 0.2); }
+  const starGeo = new THREE.BufferGeometry(); starGeo.setAttribute('position', new THREE.BufferAttribute(sp, 3)); starGeo.setAttribute('color', new THREE.BufferAttribute(sc, 3));
+  const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({ size: 0.12, vertexColors: true, sizeAttenuation: true, fog: false })); g.add(stars);
+  const neb = new THREE.Mesh(new THREE.SphereGeometry(L.domeR - 1.2, 32, 24, 0, Math.PI * 0.9, 0, Math.PI * 0.5), new THREE.MeshBasicMaterial({ color: 0x3a2a7a, transparent: true, opacity: 0.35, side: THREE.BackSide, fog: false })); neb.position.set(L.planetarium.x, L.planetarium.y, L.planetarium.z); neb.rotation.y = 1.2; g.add(neb);
   // planetarium entry portal at main floor (west side of the piazza)
   box(3, 3, 2.5, M.dark, L.planetarium.x - L.domeR + 0.5, 1.5, L.planetarium.z, g);
 
