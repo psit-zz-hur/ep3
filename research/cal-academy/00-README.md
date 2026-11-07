@@ -1,0 +1,39 @@
+# Cal Academy spatial dossier (7 Nov 2026)
+
+Research for an immersive portfolio piece: "manipulations of Cal Academy spatial data".
+Target: a textured mesh and a Gaussian splat of the Renzo Piano building that can be
+switched and warped (sphere-inverted "planet", exotic cameras) in a Three.js experience.
+
+## Files
+| File | What |
+|---|---|
+| 01-field-capture-guide.md | What to capture today with Scaniverse / Polycam / Camera, per space, and why |
+| 02-downloads-manifest.md | Every downloadable item, with URL, format, size, license, and the laptop command |
+| 03-3d-models-and-city-data.md | Existing 3D models (only one: legacy 3D Warehouse), city-scale sources, Google 3D Tiles terms |
+| 04-interior-and-exterior-imagery.md | Photos, 360s, webcams, videos, construction photos; splat-suitability ranking per space |
+| 05-museum-data-and-apis.md | GBIF/iNaturalist/USGS/NOAA/eBird endpoints and 10 data-to-location visualization ideas |
+| 06-splat-and-web-tooling.md | Scaniverse facts, companion apps, merge/registration, Spark warp hooks, pipeline |
+| 07-gis-lidar-imagery.md | USGS 3DEP 2023 lidar (90 pts/m2), 2010 lidar, DataSF, NAIP, OSM, historic maps |
+| 08-architectural-drawings.md | RPBW/Fondazione CD sheets (17), ArchDaily drawings, books, dimensions |
+| scripts/ | EPT lidar fetch + DSM/roof render scripts used to make renders/ |
+| renders/ | Lidar DSM hillshade, oblique point cloud, roof close-up, 1 m roof contours, OSM map |
+| laptop-bootstrap.sh | Pulls the public-domain / open data into ./data on the laptop |
+
+## Headline facts
+- Site centroid 37.76986, -122.46609; UTM 10N E 547,022 N 4,180,415; EPSG:3857 bbox of the building
+  [-13633020, 4546844, -13632686, 4547126].
+- Building: 41,000 m2 floor area, 19.3 m max height, 11.3 m canopy; planetarium and rainforest
+  domes both 90 ft (27.4 m) diameter; piazza skylight opening 66 x 90 ft; roof 2.5 acres, seven hills.
+- Lidar: 2023 USGS CA_SanFrancisco_1_B23, 90 pts/m2, 3 cm RMSEz, public domain, streamable from S3.
+  The roof hills, both domes and every skylight porthole resolve at 0.5 m (see renders/).
+- No public mesh, photogrammetry or splat of the building exists. The only explicit model is a
+  3,694-polygon 2014 SketchUp massing. The owned asset must be built from lidar + our splats.
+- Drawings: 17 actual construction-document sheets are free on the Fondazione Renzo Piano site
+  (site plan, roof plan with grid, 4 elevations, 3 building sections, 2 interior sections, 6 details).
+- Scaniverse raw frames cannot be exported; Polycam Developer Mode or SplatKing give COLMAP-ready poses.
+- Web: Spark 2.4 (MIT) exposes per-splat GLSL hooks for the warps; GaussianSplats3D is unmaintained.
+
+## Environment note
+This session's cloud environment "ep3 (architecture research)" has an allowlist of the hosts used here.
+The View / The Territory code is not in this repository, so formats were chosen to be generic
+(PLY/SPZ splats, GLB meshes, COPC/LAZ point clouds, GeoTIFF rasters, GeoJSON vectors).
