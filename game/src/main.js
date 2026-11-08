@@ -2,7 +2,6 @@ import * as THREE from 'three';
 import { L, layerAt } from './layout.js';
 import { buildSite } from './site.js';
 import { buildInterior } from './building.js';
-import { buildWater } from './water.js';
 import { buildFish } from './fish.js';
 import { buildPlayer } from './player.js';
 import { buildDome } from './dome.js';
@@ -41,7 +40,8 @@ M flood-zone map · N lidar grid · V splats (Scaniverse) · X planet warp (Shif
 
 const site = await buildSite(scene);
 const interior = buildInterior(scene);
-const water = buildWater(scene);
+const { buildWater } = await import(q0.get('water') === 'simple' ? './water_simple.js' : './ocean.js');   // ?water=simple falls back to the sine-shader flood
+const water = buildWater(scene, renderer, camera);
 const fish = await buildFish(scene);
 const player = buildPlayer(camera, renderer.domElement, site);
 const dome = buildDome(renderer, scene, camera, { faceRes: 1024, outRes: 2048 });
@@ -133,7 +133,7 @@ addEventListener('keydown', (e) => {
 });
 // URL params for headless tests: ?water=9&pos=x,y,z&look=x,y,z&dome=1&grid=1&map=1
 const q = new URLSearchParams(location.search);
-if (q.has('water')) { const v = parseFloat(q.get('water')); water.state.level = v; water.state.target = v; }
+if (q.has('water') && !Number.isNaN(parseFloat(q.get('water')))) { const v = parseFloat(q.get('water')); water.state.level = v; water.state.target = v; }
 if (q.has('pos')) { const [x, y, z] = q.get('pos').split(',').map(Number); camera.position.set(x, y, z); }
 if (q.has('look')) { const [x, y, z] = q.get('look').split(',').map(Number); camera.lookAt(x, y, z); }
 if (q.get('dome') === '1') dome.state.enabled = true;
@@ -180,7 +180,7 @@ layers = buildLayers({
       { label: 'look sensitivity', get: () => look.sens * 1000, set: (v) => { look.sens = v / 1000; }, min: 0.5, max: 6, step: 0.1, reset: 2.2, fmt: (v) => v.toFixed(1) },
       { label: 'perspective', kind: 'button', run: () => setProjection('persp') }, { label: 'axon SW', kind: 'button', run: () => axonFrom(1, 1) }, { label: 'axon SE', kind: 'button', run: () => axonFrom(-1, 1) }, { label: 'axon NE', kind: 'button', run: () => axonFrom(-1, -1) }, { label: 'axon NW', kind: 'button', run: () => axonFrom(1, -1) },
       { label: 'plan', kind: 'button', run: () => axonFrom(0.001, 0.001, 1) }, { label: 'elevation S', kind: 'button', run: () => axonFrom(0, 1, 0.001) }, { label: 'elevation W', kind: 'button', run: () => axonFrom(1, 0, 0.001) },
-      { label: 'field of view', get: () => cam.fov, set: (v) => { cam.fov = v; if (cam.mode !== 'axon') { camera.fov = v; camera.updateProjectionMatrix(); } }, min: 8, max: 150, step: 1, reset: 75, unit: '°' },
+      { label: 'field of view', get: () => cam.fov, set: (v) => { cam.fov = v; if (cam.mode !== 'axon') { camera.fov = v; camera.updateProjectionMatrix(); } }, min: 8, max: 150, step: 1, reset: 75, unit: 'deg' },
       { label: 'axon view height', get: () => cam.axonHeight, set: (v) => { cam.axonHeight = v; if (cam.mode === 'axon') setProjection('axon'); }, min: 20, max: 800, step: 5, reset: 240, unit: 'm' },
       { label: 'fly speed (WASD Q E)', get: () => admin.speed, set: (v) => { admin.speed = v; }, min: 2, max: 200, step: 1, reset: 24, unit: 'm/s' },
       { label: 'NAMED VIEWS', kind: 'note' },
@@ -190,7 +190,7 @@ layers = buildLayers({
     { name: 'Dome · circular view', props: [
       { label: 'dome view on (C)', kind: 'toggle', get: () => dome.state.enabled, set: (v) => { dome.state.enabled = v; } },
       { label: 'angle of view', get: () => dome.state.fovDeg, set: (v) => { dome.state.fovDeg = v; }, min: 90, max: 360, step: 5, reset: 180, fmt: (v) => `${v}° ${v >= 355 ? '· little planet' : v > 180 ? '· beyond the horizon' : '· domemaster'}` },
-      { label: 'tilt (T)', get: () => dome.state.tiltDeg, set: (v) => { dome.state.tiltDeg = v; }, min: -90, max: 90, step: 1, reset: 30, unit: '°' },
+      { label: 'tilt (T)', get: () => dome.state.tiltDeg, set: (v) => { dome.state.tiltDeg = v; }, min: -90, max: 90, step: 1, reset: 30, unit: 'deg' },
       { label: 'registration grid (G)', kind: 'toggle', get: () => dome.state.gridMix > 0, set: (v) => { dome.state.gridMix = v ? 0.85 : 0; } },
       { label: 'horizon ring', kind: 'toggle', get: () => dome.state.horizon > 0, set: (v) => { dome.state.horizon = v ? 1 : 0; } },
       { label: 'little planet · look down', kind: 'button', run: () => { dome.state.enabled = true; dome.state.fovDeg = 360; dome.state.tiltDeg = -90; } },
@@ -222,6 +222,17 @@ layers = buildLayers({
     { name: 'Water', objects: () => water.meshes, props: [
       { label: 'flood / drain (F)', kind: 'button', run: () => water.toggle() }, { label: '1 · aquarium', kind: 'button', run: () => water.setTarget(L.levels.aquarium - 0.2) }, { label: '2 · main +2 m', kind: 'button', run: () => water.setTarget(2.0) }, { label: '3 · to the roof', kind: 'button', run: () => water.setTarget(L.levels.roofSlab - 0.3) },
       { label: 'water level', get: () => water.state.level, set: (v) => { water.state.level = v; water.state.target = v; water.state.flooding = false; }, min: L.levels.aquarium - 0.5, max: L.levels.roofSlab + 2, step: 0.05, reset: L.levels.roofSlab - 0.3, unit: 'm' },
+      ...(water.setParam ? [
+        { label: 'OCEAN (GPU FFT)', kind: 'note' },
+        { label: 'wind speed', get: () => water.params.windSpeed, set: (v) => water.setParam('windSpeed', v), min: 0, max: 20, step: 0.1, reset: 6, unit: 'm/s' },
+        { label: 'wind direction', get: () => water.params.windDir, set: (v) => water.setParam('windDir', v), min: 0, max: 360, step: 1, reset: 35, unit: 'deg' },
+        { label: 'choppiness', get: () => water.params.choppiness, set: (v) => water.setParam('choppiness', v), min: 0, max: 2, step: 0.01, reset: 1 },
+        { label: 'swell', get: () => water.params.swell, set: (v) => water.setParam('swell', v), min: 0, max: 1, step: 0.01, reset: 0.4 },
+        { label: 'foam', get: () => water.params.foam, set: (v) => water.setParam('foam', v), min: 0, max: 1, step: 0.01, reset: 0.45 },
+        { label: 'glitter', get: () => water.params.glitter, set: (v) => water.setParam('glitter', v), min: 0, max: 2, step: 0.01, reset: 1 },
+        { label: 'planar reflection', kind: 'toggle', get: () => water.params.reflection, set: (v) => water.setParam('reflection', v) },
+        { label: 'fft size (128 / 256)', get: () => water.params.fftSize, set: (v) => water.setParam('fftSize', v >= 192 ? 256 : 128), min: 128, max: 256, step: 128, reset: 256, fmt: (v) => String(v) },
+      ] : []),
     ] },
     { name: 'Fish', objects: () => Object.values(fish.groups || {}).flat() },
     { name: 'Exhibit props (Sketchfab)', objects: () => loadedProps.map((p) => p.root), props: [{ label: `${loadedProps.length} loaded · textures capped at 2k · assets/props/CREDITS.md`, kind: 'note' }] },

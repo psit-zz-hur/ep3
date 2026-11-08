@@ -13,12 +13,12 @@ export function buildPoolSkin(scene, camera) {
     uWaterY: { value: -8 }, uSun: { value: new THREE.Vector3(-0.4, 0.8, 0.45).normalize() }, uLight: { value: 1 }, uTileSize: { value: 0.3 }, uFillet: { value: 0.9144 },  // 3 ft
     uCapital: { value: 1.6 }, uMode: { value: 0 },        // mode 0 = pool tile, 1 = poured concrete, 2 = skatepark (concrete + painted routes)
     uRoutes: { value: Array.from({ length: 24 }, () => new THREE.Vector4()) }, uRouteN: { value: 0 }, uZones: { value: Array.from({ length: 12 }, () => new THREE.Vector3()) }, uZoneN: { value: 0 }, uBand: { value: 0.8 }, uHatch: { value: 0.6 }, uSteps: { value: 96 },
-    uDebug: { value: 0 }, uCaustic: { value: 0 }, uResolution: { value: new THREE.Vector2(1, 1) }, uProj: { value: new THREE.Matrix4() }, uView: { value: new THREE.Matrix4() },
+    uClipN: { value: new THREE.Vector3() }, uClipD: { value: 0 }, uDebug: { value: 0 }, uCaustic: { value: 0 }, uResolution: { value: new THREE.Vector2(1, 1) }, uProj: { value: new THREE.Matrix4() }, uView: { value: new THREE.Matrix4() },
   };
   const P = L; const f = (n) => n.toFixed(2);
   const glsl = `
     uniform vec3 uCamPos; uniform float uTileTop, uTime, uFogNear, uFogFar, uWaterY, uLight, uTileSize, uFillet, uCaustic, uDebug, uCapital, uMode, uBand, uHatch, uSteps; uniform vec3 uFogColor, uSun; uniform mat4 uProj, uView;
-    uniform vec4 uRoutes[24]; uniform int uRouteN; uniform vec3 uZones[12]; uniform int uZoneN;
+    uniform vec3 uClipN; uniform float uClipD; uniform vec4 uRoutes[24]; uniform int uRouteN; uniform vec3 uZones[12]; uniform int uZoneN;
     varying vec3 vWorld;
     float sdBox(vec3 p, vec3 c, vec3 b){ vec3 q = abs(p - c) - b; return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)),0.0); }
     float sdSphere(vec3 p, vec3 c, float r){ return length(p - c) - r; }
@@ -139,6 +139,7 @@ export function buildPoolSkin(scene, camera) {
       vec3 ro = uCamPos; vec3 rd = normalize(vWorld - uCamPos);
       // start at the camera if it is inside the volume, else at the box surface
       float t = 0.0; float d; vec3 p = ro; bool hit = false;
+      if (dot(uClipN, uClipN) > 0.5) { float sc = dot(uClipN, ro) - uClipD; float dn = dot(uClipN, rd); if (sc < 0.0 && dn > 1e-4) t = -sc / dn; }  // mirrored passes: start the march at the clip plane
       for (int i = 0; i < 160; i++) { if (float(i) >= uSteps) break; p = ro + rd * t; d = map(p); if (d < 0.004 * t + 0.002) { hit = true; break; } t += d * 0.9; if (t > 400.0) break; }
       if (!hit) { if (uDebug > 0.5) { gl_FragColor = vec4(1.0, 0.0, 1.0, 1.0); gl_FragDepthEXT = 0.9999; return; } discard; }
       vec3 n = normalAt(p); vec3 col = tiles(p, n);
