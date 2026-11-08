@@ -30,6 +30,9 @@ MODELS = {
   'grizzly_skull':                  ('0d59abfbb8c34864b96fa9e68b21da4c', 'Emm (@edemaistre)', 'Grizzly bear skull'),
   'reptile_fossil':                 ('fb83029815304e61ae5945e6281d2269', 'Emm (@edemaistre)', 'Reptile fossil slab'),
   'coral_visitor_scan':             ('7da18265ce31434fb3010fcbdb1ee6f6', 'Emm (@edemaistre)', 'Coral'),
+  # Whale skeletons for the hanging blue whale over Giants of Land and Sea (the Academy's own is not scanned):
+  'blue_whale_skeleton_nhm':        ('8502dbef80ed4aa688c13c90cb14de73', 'Natural History Museum London (NHM_Imaging)', 'Hintze Hall blue whale "Hope", 25.2 m, CC BY-NC-SA'),
+  'blue_whale_skeleton_nhm_6k':     ('018b2c21e4534f34aa9deb55141407b3', 'Thomas Flynn (@nebulousflynn)', 'Optimised 6k-triangle version of the NHM scan, CC BY-NC-SA'),
   # page could not be read (rate-limited); check on sketchfab.com and add if it says "Download Free":
   # 'trex_full_scale':              ('0390e81bbbc74aa38b4021a0b58c6115', 'Emm (@edemaistre)', 'Day 279: full-scale T. rex skeleton'),
   # View-only (embed, do not download): Viz Studio 'philippine-coral-reef-photogrammetry' 57042a82ee7246b6899832512404dd08,

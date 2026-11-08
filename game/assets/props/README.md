@@ -18,3 +18,5 @@ Drop glTF/GLB exhibit props here (git-ignored). File names expected by src/props
 - echinophyllia_sp.glb
 
 Or a folder per model containing scene.gltf (what research/cal-academy/scripts/sketchfab_fetch.py writes).
+- blue_whale_skeleton_nhm.glb (or folder blue_whale_skeleton_nhm/scene.gltf)
+- orca_skeleton.glb

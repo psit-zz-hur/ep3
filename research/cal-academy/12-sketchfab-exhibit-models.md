@@ -49,3 +49,22 @@ triplet (CAS:HERP:12345) and the media DOI/ARK, non-commercial without written a
 - **K** starts a fly-through of the nearest scan: the camera enters the bounding box, passes through the hollow of the skull or the
   jaws, pulls out and orbits once. Works with any loaded prop.
 - Credits are written to `game/assets/props/CREDITS.md` by the fetch script.
+
+## The hanging whale
+The skeleton over Giants of Land and Sea is a **blue whale (Balaenoptera musculus)**, about 85-87 ft (26 m); it has hung in
+the building since the 2008 reopening and the 2018 exhibit was built underneath it (exhibit page https://www.calacademy.org/exhibits/giants-of-land-and-sea ,
+KQED https://www.kqed.org/science/1926434/the-giants-of-california-how-redwoods-and-whales-got-so-big ). An **orca (O319, Point
+Reyes stranding, Nov 2011)** also hangs from the ceiling (https://www.calacademy.org/a-specimens-path). Humpback, minke and sperm
+whale skulls were in the exhibit. Provenance of the blue whale itself is not published online; the Academy's Ornithology & Mammalogy
+department (Moe Flannery, collections manager) would know. Do not confuse it with "Ms. Blue" at UC Santa Cruz (scanned 2023).
+
+No scan or splat of the Academy's whale exists online. Stand-ins:
+| Model | Author | License | URL |
+|---|---|---|---|
+| Blue whale skeleton "Hope", Hintze Hall, 25.2 m, full scan | NHM London (NHM_Imaging) | CC BY-NC-SA, free download | https://sketchfab.com/3d-models/blue-whale-skeleton-8502dbef80ed4aa688c13c90cb14de73 |
+| NHM Blue Whale 6k (optimised) | Thomas Flynn | CC BY-NC-SA, free download | https://sketchfab.com/3d-models/nhm-blue-whale-6k-018b2c21e4534f34aa9deb55141407b3 |
+| Whale Skeleton, low-poly museum style, 112k tris | Josie_Calderone | CC BY, free download | https://sketchfab.com/3d-models/whale-skeleton-643778478ed3468d86dfb73189bdc7ad |
+| Blue Whale Skeleton, Grease Pencil sketch | shibi | CC BY, free download | https://sketchfab.com/3d-models/blue-whale-skeleton-5611ee165c2144f79d180e9b5260c928 |
+Both NHM items are in `scripts/sketchfab_fetch.py`; `game/src/props.js` hangs the whale at 6.5 m over the Giants gallery (26 m long,
+rotated to the long axis). Best plan: Scaniverse the real one from the mezzanine on your next visit; a splat of a hanging skeleton
+against the skylight is exactly the kind of asset nobody else has.
