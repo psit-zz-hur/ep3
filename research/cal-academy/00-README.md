@@ -15,6 +15,13 @@ switched and warped (sphere-inverted "planet", exotic cameras) in a Three.js exp
 | 06-splat-and-web-tooling.md | Scaniverse facts, companion apps, merge/registration, Spark warp hooks, pipeline |
 | 07-gis-lidar-imagery.md | USGS 3DEP 2023 lidar (90 pts/m2), 2010 lidar, DataSF, NAIP, OSM, historic maps |
 | 08-architectural-drawings.md | RPBW/Fondazione CD sheets (17), ArchDaily drawings, books, dimensions |
+| 09-morrison-planetarium-fulldome.md | Dome specs, formats, real-time path, contacts |
+| 10-freeswim-fridays-design.md | Flood-zone plan, roof access, dive loop |
+| 11-steinhart-species-roster.md | 88 reef species + other tanks |
+| 12-sketchfab-exhibit-models.md | Exhibit scans, licenses, the blue whale |
+| 13-game-precedents.md | 25 games to learn from |
+| 14-water-rendering-web-ocean.md | web-ocean assessment |
+| 15-cal-academy-public-datasets.md | Census of every public Academy dataset/API/archive, ranked top 10 for a viz demo |
 | scripts/ | EPT lidar fetch + DSM/roof render scripts used to make renders/ |
 | renders/ | Lidar DSM hillshade, oblique point cloud, roof close-up, 1 m roof contours, OSM map |
 | laptop-bootstrap.sh | Pulls the public-domain / open data into ./data on the laptop |
