@@ -120,6 +120,7 @@ def add_drawings(model):
         li, _ = layer(model, tag, (60, 60, 60, 255), id_root)
         png = e['raster_png']
         mat = r3.Material(); mat.Name = f'DRAWING {sid}'
+        mat.DiffuseColor = (255, 255, 255, 255); mat.AmbientColor = (255, 255, 255, 255)
         try: mat.SetBitmapTexture(png)
         except Exception as ex: print('texture failed', sid, ex, file=sys.stderr)
         midx = model.Materials.Add(mat)

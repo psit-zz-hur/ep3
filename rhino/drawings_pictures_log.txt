@@ -1,0 +1,22 @@
+OK drawing-328  250.79 x 73.02 m  plane y = -4.0 (cut through the domes), faces +y  layer DRAWINGS PICTURES::section drawing-328
+OK drawing-336  126.98 x 76.19 m  plane x = 0.0 (piazza), faces +x  layer DRAWINGS PICTURES::section drawing-336
+OK drawing-275  126.98 x 76.19 m  plane x = +0.5  layer DRAWINGS PICTURES::section drawing-275
+OK drawing-279  46.11 x 39.47 m  plane y = -3.5 (cut through the dome, assumed E-W, faces +y)  layer DRAWINGS PICTURES::section-interior drawing-279
+OK drawing-285  46.62 x 39.90 m  plane y = -3.5 (assumed E-W cut, faces +y)  layer DRAWINGS PICTURES::section-interior drawing-285
+OK booklet-section-A  262.34 x 58.07 m  plane y = -5.0, faces -y (viewer south)  layer DRAWINGS PICTURES::section booklet-section-A
+OK booklet-section-B  233.52 x 51.20 m  plane y = -3.0, faces +y (viewer north)  layer DRAWINGS PICTURES::section booklet-section-B
+OK drawing-337  250.79 x 61.91 m  plane y = +65  layer DRAWINGS PICTURES::elevation drawing-337
+OK drawing-240  250.79 x 61.91 m  plane y = -65  layer DRAWINGS PICTURES::elevation drawing-240
+OK drawing-243  250.79 x 61.90 m  plane x = +95  layer DRAWINGS PICTURES::elevation drawing-243
+OK drawing-613-north  180.64 x 67.74 m  plane y = +75 (10 m behind 337 so they do not overlap)  layer DRAWINGS PICTURES::elevation drawing-613-north
+OK drawing-613-east  180.64 x 67.74 m  plane x = -95  layer DRAWINGS PICTURES::elevation drawing-613-east
+OK drawing-352  182.03 x 148.50 m  plane z = 11.45  layer DRAWINGS PICTURES::plan drawing-352
+OK drawing-235  335.30 x 203.10 m  plane z = 0  layer DRAWINGS PICTURES::plan drawing-235
+OK drawing-311  14.63 x 10.86 m  plane parked y=+130, needs Bryan for position (and scale if guessed)  layer DRAWINGS PICTURES::detail drawing-311
+OK drawing-354  58.52 x 45.85 m  plane parked y=+130, needs Bryan for position (and scale if guessed)  layer DRAWINGS PICTURES::detail drawing-354
+OK drawing-355  14.63 x 10.92 m  plane parked y=+130, needs Bryan for position (and scale if guessed)  layer DRAWINGS PICTURES::detail drawing-355
+OK drawing-303  14.63 x 10.92 m  plane parked y=+130, needs Bryan for position (and scale if guessed)  layer DRAWINGS PICTURES::detail drawing-303
+OK drawing-304  9.75 x 7.35 m  plane parked y=+130, needs Bryan for position (and scale if guessed)  layer DRAWINGS PICTURES::detail drawing-304
+OK drawing-289  234.09 x 174.93 m  plane parked y=+130, needs Bryan for position (and scale if guessed)  layer DRAWINGS PICTURES::detail drawing-289
+pictures: 20
+DONE
