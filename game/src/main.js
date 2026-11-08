@@ -100,7 +100,7 @@ addEventListener('keydown', (e) => {
   if (e.code === 'KeyP') dome.capture(4096);
   if (e.code === 'KeyM') map.toggle();
   if (e.code === 'KeyN') { gridOn = !gridOn; site.setGrid(gridOn ? 0.35 : 0); }
-  if (e.code === 'KeyK') { if (fly.active) fly.stop(); else { let best = null, bd = 1e9; for (const p of loadedProps) { const d = p.box.getCenter(new THREE.Vector3()).distanceTo(camera.position); if (d < bd) { bd = d; best = p; } } fly.start(best); } }
+  if (e.code === 'KeyK') flyNearest();
   if (e.code === 'KeyO') { pool.state.enabled = !pool.state.enabled; }
   if (e.code === 'KeyI') { pool.setMode((Math.round(pool.mode) + 1) % 3); }
   if (e.code === 'KeyJ') setSkate(!skate);
@@ -136,6 +136,13 @@ if (q.has('fillet')) pool.setFillet(parseFloat(q.get('fillet')));
 if (q.has('tile')) pool.setTileSize(parseFloat(q.get('tile')));
 const loadedProps = q.get('props') === '0' ? [] : await loadProps(scene, (p) => console.log('prop', p.name));   // ?props=0 skips the Sketchfab props (fast loads, headless stills)
 const fly = makeFlythrough(camera);
+function flyNearest() { if (fly.active) { fly.stop(); return; } let best = null, bd = 1e9; for (const p of loadedProps) { const d = p.box.getCenter(new THREE.Vector3()).distanceTo(camera.position); if (d < bd) { bd = d; best = p; } } fly.start(best); }
+function goTo(px, py, pz, lx, ly, lz) { camera.position.set(px, py, pz); camera.lookAt(lx, ly, lz); orbit.target.set(lx, ly, lz); }
+const VIEWS = [
+  ['roof hill (start)', [29, 15.2, 10], [0, 9.6, 3]], ['from the park', [120, 70, 190], [0, 5, 0]], ['piazza', [0, 3, 30], [0, 2, 0]], ['whale hall', [-58, 2.4, 36], [-64, 6.4, 6]],
+  ['planetarium', [L.planetarium.x - 24, 4, L.planetarium.z + 2], [L.planetarium.x, 5.6, L.planetarium.z]], ['African Hall', [67, 2, -10], [67, 4, -40]], ['reef tank', [-52, -2, -8], [-52, -4, -28]],
+  ['under the floor', [0, -5, 40], [0, -3, 0]], ['plan from above', [0, 120, 4], [0, 0, 3]], ['planet seat', [90, 60, 150], [0, 35, 3]],
+];
 layers = buildLayers([
   { name: 'Lidar site (2023 DSM)', objects: () => [site.mesh] },
   { name: 'Building interior', objects: () => [interior.group] },
@@ -150,11 +157,30 @@ layers = buildLayers([
   footer: '` leaves ADMIN · V / X also toggle splats and the planet warp',
   props: [
     { group: 'RENDER', label: 'PAUSE RENDER (R)', kind: 'toggle', get: () => render.paused, set: (v) => { render.paused = v; } },
+    // VIEW: everything the keys do, as controls
+    { group: 'VIEW', label: 'dome view (C)', kind: 'toggle', get: () => dome.state.enabled, set: (v) => { dome.state.enabled = v; } },
+    { group: 'VIEW', label: 'registration grid (G)', kind: 'toggle', get: () => dome.state.gridMix > 0, set: (v) => { dome.state.gridMix = v ? 0.85 : 0; } },
+    { group: 'VIEW', label: 'dome tilt (T)', get: () => dome.state.tiltDeg, set: (v) => { dome.state.tiltDeg = v; }, min: -10, max: 60, step: 1, reset: 30, unit: '°' },
+    { group: 'VIEW', label: 'flood-zone map (M)', kind: 'toggle', get: () => map.visible(), set: (v) => { if (map.visible() !== v) map.toggle(); } },
+    { group: 'VIEW', label: 'lidar 10 m grid (N)', kind: 'toggle', get: () => gridOn, set: (v) => { gridOn = v; site.setGrid(v ? 0.35 : 0); } },
+    { group: 'VIEW', label: 'help text (H)', kind: 'toggle', get: () => showHelp, set: (v) => { showHelp = v; help.style.display = v ? '' : 'none'; } },
+    { group: 'VIEW', label: 'save 4K domemaster (P)', kind: 'button', run: () => dome.capture(4096) },
+    { group: 'VIEW', label: 'fly through nearest prop (K)', kind: 'button', run: () => flyNearest() },
+    { group: 'VIEW', label: 'back to PLAY (`)', kind: 'button', run: () => setAdmin(false) },
+    // CAMERA bookmarks
+    ...VIEWS.map(([n, p, l]) => ({ group: 'CAMERA', label: n, kind: 'button', run: () => goTo(...p, ...l) })),
+    // WATER
+    { group: 'WATER', label: 'flood / drain (F)', kind: 'button', run: () => water.toggle() },
+    { group: 'WATER', label: '1 · aquarium', kind: 'button', run: () => water.setTarget(L.levels.aquarium - 0.2) },
+    { group: 'WATER', label: '2 · main +2 m', kind: 'button', run: () => water.setTarget(2.0) },
+    { group: 'WATER', label: '3 · to the roof', kind: 'button', run: () => water.setTarget(L.levels.roofSlab - 0.3) },
+    { group: 'WATER', label: 'water level', get: () => water.state.level, set: (v) => { water.state.level = v; water.state.target = v; water.state.flooding = false; }, min: L.levels.aquarium - 0.5, max: L.levels.roofSlab + 2, step: 0.05, reset: L.levels.roofSlab - 0.3, unit: 'm' },
     { group: 'RENDER', label: 'render scale (device px)', get: () => render.scale, set: (v) => { render.scale = v; renderer.setPixelRatio(v); renderer.setSize(innerWidth, innerHeight); }, min: 0.35, max: 2, step: 0.05, reset: 1, fmt: (v) => `${v.toFixed(2)}× · ${Math.round(innerWidth * v)}×${Math.round(innerHeight * v)}` },
     { group: 'RENDER', label: 'pool-skin raymarch steps', get: () => pool.uniforms.uSteps.value, set: (v) => { pool.uniforms.uSteps.value = Math.round(v); }, min: 24, max: 160, step: 4, reset: 96, fmt: (v) => `${Math.round(v)}` },
     { group: 'RENDER', label: 'props (Sketchfab) drawn', kind: 'toggle', get: () => loadedProps.every((p) => p.root.visible), set: (v) => { for (const p of loadedProps) p.root.visible = v; } },
     // POOL SKIN (poolskin.js): the raymarched sock below the tile line
-    { group: 'POOL SKIN', label: 'skin on', kind: 'toggle', get: () => pool.state.enabled, set: (v) => { pool.state.enabled = v; } },
+    { group: 'POOL SKIN', label: 'Skateboard Saturdays (J)', kind: 'toggle', get: () => skate, set: (v) => setSkate(v) },
+    { group: 'POOL SKIN', label: 'skin on (O)', kind: 'toggle', get: () => pool.state.enabled, set: (v) => { pool.state.enabled = v; } },
     { group: 'POOL SKIN', label: 'skin', get: () => Math.round(pool.mode), set: (v) => pool.setMode(Math.round(v)), min: 0, max: 2, step: 1, reset: 0, fmt: (v) => ['tile', 'concrete', 'skatepark'][Math.round(v)] },
     { group: 'POOL SKIN', label: 'route band width', get: () => pool.band, set: (v) => pool.setBand(v), min: 0.2, max: 3, step: 0.05, reset: 0.8, unit: 'm' },
     { group: 'POOL SKIN', label: 'hatch pitch', get: () => pool.hatch, set: (v) => pool.setHatch(v), min: 0.15, max: 2, step: 0.05, reset: 0.6, unit: 'm' },
@@ -162,8 +188,6 @@ layers = buildLayers([
     { group: 'POOL SKIN', label: 'tile line (height)', get: () => pool.tileTop, set: (v) => pool.setTileTop(v), min: L.levels.aquarium, max: L.levels.roofSlab + 1.0, step: 0.05, reset: L.levels.roofSlab - 0.3, unit: 'm' },
     { group: 'POOL SKIN', label: 'tile size', get: () => pool.tileSize, set: (v) => pool.setTileSize(v), min: 0.05, max: 2.0, step: 0.01, reset: 0.3, fmt: (v) => `${(v * 100).toFixed(0)} cm` },
     { group: 'POOL SKIN', label: 'column capital', get: () => pool.uniforms.uCapital.value, set: (v) => { pool.uniforms.uCapital.value = v; }, min: 0, max: 4, step: 0.05, reset: 1.6, unit: 'm' },
-    // WATER
-    { group: 'WATER', label: 'water level', get: () => water.state.level, set: (v) => { water.state.level = v; water.state.target = v; water.state.flooding = false; }, min: L.levels.aquarium - 0.5, max: L.levels.roofSlab + 2, step: 0.05, reset: L.levels.roofSlab - 0.3, unit: 'm' },
     // PLANET (splats.js sphere inversion)
     { group: 'BLOB PLANET', label: 'warp on', kind: 'toggle', get: () => splats.state.warp, set: (v) => { splats.state.warp = v; } },
     { group: 'BLOB PLANET', label: 'flipped (roof on top)', kind: 'toggle', get: () => !!splats.planet().flip, set: (v) => splats.setFlip(v) },

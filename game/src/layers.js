@@ -43,6 +43,10 @@ export function buildLayers(spec, splats, opts = {}) {
     const r = row(p.label, !!p.get(), (v) => p.set(v)); const cb = r.querySelector('input');
     syncers.push(() => { const v = !!p.get(); if (cb.checked !== v) cb.checked = v; }); return r;
   }
+  function button(p) {
+    const b = document.createElement('button'); b.textContent = p.label; b.style.cssText = 'font:inherit;padding:3px 8px;border:1px solid #000;background:#fff;color:#000;cursor:pointer;margin:0 6px 6px 0;';
+    b.addEventListener('click', () => { p.run(); setTimeout(() => { for (const s of syncers) s(); }, 50); }); return b;
+  }
   function num(label, value, step, onInput) {
     const w = document.createElement('label'); w.style.cssText = 'display:flex;gap:8px;align-items:center;';
     const t = document.createElement('span'); t.textContent = label; t.style.width = '28px';
@@ -65,9 +69,11 @@ export function buildLayers(spec, splats, opts = {}) {
     // PROPERTIES: sliders by group
     if (props.length) {
       el.appendChild(h('PROPERTIES'));
-      let grp = null;
+      let grp = null, btnRow = null;
       for (const p of props) {
-        if (p.group !== grp) { grp = p.group; el.appendChild(sub(grp)); }
+        if (p.group !== grp) { grp = p.group; el.appendChild(sub(grp)); btnRow = null; }
+        if (p.kind === 'button') { if (!btnRow) { btnRow = document.createElement('div'); btnRow.style.cssText = 'display:flex;flex-wrap:wrap;margin:2px 0;'; el.appendChild(btnRow); } btnRow.appendChild(button(p)); continue; }
+        btnRow = null;
         el.appendChild(p.kind === 'toggle' ? toggle(p) : slider(p));
       }
       const hint = document.createElement('div'); hint.style.cssText = 'color:#888;margin-top:4px;'; hint.textContent = 'double-click a slider to reset it'; el.appendChild(hint);

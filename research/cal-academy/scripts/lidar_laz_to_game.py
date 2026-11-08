@@ -45,7 +45,10 @@ def main():
     a = ap.parse_args()
     meta = json.load(open(A / 'site_meta.json')); to_game = utm_to_game(meta)
     bw, bd = meta['bldg_size_m']; X0, X1, Z0, Z1 = -bw / 2 - a.pad, bw / 2 + a.pad, -bd / 2 - a.pad, bd / 2 + a.pad
-    files = [pathlib.Path(f) for f in a.files] or sorted((ROOT / 'data' / 'cal-academy' / 'lidar2023').glob('*.laz'))
+    files = []
+    for f in a.files:
+        f = pathlib.Path(f); files += sorted(f.glob('*.laz')) if f.is_dir() else [f]
+    files = files or sorted((ROOT / 'data' / 'cal-academy' / 'lidar2023').glob('*.laz'))
     files = [f for f in files if not f.name.endswith('_game.ply')]
     if not files: sys.exit('no .laz in data/cal-academy/lidar2023 (run laptop-bootstrap.sh)')
     merged = []

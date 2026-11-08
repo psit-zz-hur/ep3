@@ -55,7 +55,7 @@ def main():
     bad = [k for k, r in res if r not in ('cached', 'ok')]; print('downloaded', len(res) - len(bad), 'failed', len(bad), file=sys.stderr)
     # merge + transform into the game frame (one PLY)
     files = [str(N / f'{k}.laz') for k in hier if (N / f'{k}.laz').exists()]
-    cmd = [sys.executable, '-X', 'utf8', str(pathlib.Path(__file__).with_name('lidar_laz_to_game.py')), '--crs', 'EPSG:3857', '--pad', str(a.pad), '--max', str(a.max), '--merge-out', str(D / 'ept_site_game.ply')] + files
+    cmd = [sys.executable, '-X', 'utf8', str(pathlib.Path(__file__).with_name('lidar_laz_to_game.py')), '--crs', 'EPSG:3857', '--pad', str(a.pad), '--max', str(a.max), '--merge-out', str(D / 'ept_site_game.ply'), str(N)]   # the folder, not 877 paths (Windows command-line limit)
     subprocess.run(cmd, check=True)
 
 
