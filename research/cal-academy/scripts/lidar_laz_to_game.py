@@ -26,17 +26,29 @@ def utm_to_game(meta):
     return f
 
 
+DT = [('x', '<f4'), ('y', '<f4'), ('z', '<f4'), ('red', 'u1'), ('green', 'u1'), ('blue', 'u1'), ('classification', 'u1')]
+
+
+def write_ply(out, rows):
+    header = ('ply\nformat binary_little_endian 1.0\ncomment 2023 USGS 3DEP CA_SanFrancisco_1_B23, game frame (see site_meta.json)\nelement vertex %d\n' % len(rows)
+              + 'property float x\nproperty float y\nproperty float z\nproperty uchar red\nproperty uchar green\nproperty uchar blue\nproperty uchar classification\nend_header\n')
+    with open(out, 'wb') as fo: fo.write(header.encode('ascii')); fo.write(rows.tobytes())
+    print('wrote', out, len(rows), 'pts', out.stat().st_size // 1024 // 1024, 'MB')
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('files', nargs='*'); ap.add_argument('--pad', type=float, default=100, help='metres around the building bbox (game frame)')
     ap.add_argument('--max', type=int, default=1500000); ap.add_argument('--crs', default=None, help='override the tile CRS, e.g. EPSG:7131')
     ap.add_argument('--drop-noise', action='store_true', default=True)
+    ap.add_argument('--merge-out', default=None, help='write ONE ply from all inputs (EPT nodes) instead of one per file')
     a = ap.parse_args()
     meta = json.load(open(A / 'site_meta.json')); to_game = utm_to_game(meta)
     bw, bd = meta['bldg_size_m']; X0, X1, Z0, Z1 = -bw / 2 - a.pad, bw / 2 + a.pad, -bd / 2 - a.pad, bd / 2 + a.pad
     files = [pathlib.Path(f) for f in a.files] or sorted((ROOT / 'data' / 'cal-academy' / 'lidar2023').glob('*.laz'))
     files = [f for f in files if not f.name.endswith('_game.ply')]
     if not files: sys.exit('no .laz in data/cal-academy/lidar2023 (run laptop-bootstrap.sh)')
+    merged = []
     for f in files:
         try:
             las = laspy.read(str(f))
@@ -61,18 +73,19 @@ def main():
         idx = np.nonzero(keep)[0]
         print(f.name, 'crs', crs.to_epsg(), 'unit', unit, 'points in clip', len(idx), 'of', len(x), file=sys.stderr)
         if len(idx) == 0: continue
-        if len(idx) > a.max: idx = np.random.default_rng(0).choice(idx, a.max, replace=False)
+        if len(idx) > a.max and not a.merge_out: idx = np.random.default_rng(0).choice(idx, a.max, replace=False)
         if 'red' in las.point_format.dimension_names:
             r, g, b = (np.asarray(las.red)[idx] >> 8), (np.asarray(las.green)[idx] >> 8), (np.asarray(las.blue)[idx] >> 8)
         else:
             lut = np.array([CLASS_RGB.get(i, (160, 160, 160)) for i in range(256)], np.uint8); c = lut[cls[idx]]; r, g, b = c[:, 0], c[:, 1], c[:, 2]
-        rows = np.zeros(len(idx), dtype=[('x', '<f4'), ('y', '<f4'), ('z', '<f4'), ('red', 'u1'), ('green', 'u1'), ('blue', 'u1'), ('classification', 'u1')])
+        rows = np.zeros(len(idx), dtype=DT)
         rows['x'] = X[idx]; rows['y'] = Y[idx]; rows['z'] = Zg[idx]; rows['red'] = r; rows['green'] = g; rows['blue'] = b; rows['classification'] = cls[idx]
-        out = f.with_name(f.stem.replace('.copc', '') + '_game.ply')
-        header = ('ply\nformat binary_little_endian 1.0\ncomment 2023 USGS 3DEP CA_SanFrancisco_1_B23, game frame (see site_meta.json)\nelement vertex %d\n' % len(rows)
-                  + 'property float x\nproperty float y\nproperty float z\nproperty uchar red\nproperty uchar green\nproperty uchar blue\nproperty uchar classification\nend_header\n')
-        with open(out, 'wb') as fo: fo.write(header.encode('ascii')); fo.write(rows.tobytes())
-        print('wrote', out, len(rows), 'pts', out.stat().st_size // 1024 // 1024, 'MB')
+        if a.merge_out: merged.append(rows); continue
+        write_ply(f.with_name(f.stem.replace('.copc', '') + '_game.ply'), rows)
+    if a.merge_out and merged:
+        allrows = np.concatenate(merged)
+        if len(allrows) > a.max: allrows = allrows[np.random.default_rng(0).choice(len(allrows), a.max, replace=False)]
+        write_ply(pathlib.Path(a.merge_out), allrows)
 
 
 if __name__ == '__main__':

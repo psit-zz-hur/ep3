@@ -9,3 +9,6 @@ captures/
 node_modules/
 rhino/*.3dm
 rhino/*.3dmbak
+exports/
+CALACADEMY_3D_ASSETS/
+boards/*.png

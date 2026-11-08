@@ -1,0 +1,130 @@
+[
+ {
+  "name": "reef_buddha_wall",
+  "url": "./assets/props/reef_buddha_wall/scene.gltf",
+  "kind": "gltf",
+  "source": "California Academy of Sciences Viz Studio",
+  "license": ""
+ },
+ {
+  "name": "acropora_palmata_01",
+  "url": "./assets/props/acropora_palmata_01/scene.gltf",
+  "kind": "gltf",
+  "source": "California Academy of Sciences Viz Studio",
+  "license": ""
+ },
+ {
+  "name": "echinophyllia_sp",
+  "url": "./assets/props/echinophyllia_sp/scene.gltf",
+  "kind": "gltf",
+  "source": "California Academy of Sciences Viz Studio",
+  "license": ""
+ },
+ {
+  "name": "hubbs_beaked_whale_skull",
+  "url": "./assets/props/hubbs_beaked_whale_skull/scene.gltf",
+  "kind": "gltf",
+  "source": "Emm",
+  "license": ""
+ },
+ {
+  "name": "redwood_cross_section",
+  "url": "./assets/props/redwood_cross_section/scene.gltf",
+  "kind": "gltf",
+  "source": "Emm",
+  "license": ""
+ },
+ {
+  "name": "sea_turtle",
+  "url": "./assets/props/sea_turtle/scene.gltf",
+  "kind": "gltf",
+  "source": "Emm",
+  "license": ""
+ },
+ {
+  "name": "alligator_skull",
+  "url": "./assets/props/alligator_skull/scene.gltf",
+  "kind": "gltf",
+  "source": "Emm",
+  "license": "CC BY"
+ },
+ {
+  "name": "walrus_skull",
+  "url": "./assets/props/walrus_skull/scene.gltf",
+  "kind": "gltf",
+  "source": "Emm",
+  "license": "CC BY"
+ },
+ {
+  "name": "megalodon_jaws",
+  "url": "./assets/props/megalodon_jaws/scene.gltf",
+  "kind": "gltf",
+  "source": "Emm",
+  "license": "CC BY"
+ },
+ {
+  "name": "seal_sea_lion_skeletons",
+  "url": "./assets/props/seal_sea_lion_skeletons/scene.gltf",
+  "kind": "gltf",
+  "source": "Emm",
+  "license": "CC BY"
+ },
+ {
+  "name": "humongous_tropical_fish",
+  "url": "./assets/props/humongous_tropical_fish/scene.gltf",
+  "kind": "gltf",
+  "source": "Emm",
+  "license": "CC BY"
+ },
+ {
+  "name": "grizzly_skull",
+  "url": "./assets/props/grizzly_skull/scene.gltf",
+  "kind": "gltf",
+  "source": "Emm",
+  "license": "CC BY"
+ },
+ {
+  "name": "reptile_fossil",
+  "url": "./assets/props/reptile_fossil/scene.gltf",
+  "kind": "gltf",
+  "source": "Emm",
+  "license": "CC BY"
+ },
+ {
+  "name": "coral_visitor_scan",
+  "url": "./assets/props/coral_visitor_scan/scene.gltf",
+  "kind": "gltf",
+  "source": "Emm",
+  "license": "CC BY"
+ },
+ {
+  "name": "blue_whale_skeleton_nhm",
+  "url": "./assets/props/blue_whale_skeleton_nhm/scene.gltf",
+  "kind": "gltf",
+  "source": "Natural History Museum London",
+  "license": "CC BY-NC-SA"
+ },
+ {
+  "name": "blue_whale_skeleton_nhm_6k",
+  "url": "./assets/props/blue_whale_skeleton_nhm_6k/scene.gltf",
+  "kind": "gltf",
+  "source": "Thomas Flynn",
+  "license": "CC BY-NC-SA"
+ },
+ {
+  "name": "lidar_building (synthetic splat)",
+  "url": "./assets/splats/lidar_building.ply",
+  "kind": "ply",
+  "source": "USGS 3DEP 2023 lidar",
+  "license": "public domain",
+  "pointSize": 0.6
+ },
+ {
+  "name": "lidar_site (synthetic splat)",
+  "url": "./assets/splats/lidar_site.ply",
+  "kind": "ply",
+  "source": "USGS 3DEP 2023 lidar",
+  "license": "public domain",
+  "pointSize": 0.6
+ }
+]

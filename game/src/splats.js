@@ -46,16 +46,17 @@ function matrixFromEntry(e) {
 // Inversion is conformal: locally a similarity with scale R^2/r^2 and a reflection across the plane normal to the
 // radial direction. A Gaussian is centrally symmetric, so the reflection is the 180 deg rotation about the radial
 // axis (quaternion (n, 0)). `mix` lerps the whole thing on, so the warp can breathe.
+// One planet (Bryan, 11/07: 'I love this blob planet. you can get rid of the other ones, just flip this'): inversion centre
+// 60 m above the piazza, R = 60, then mirrored about the ground-sphere's centre height so the roof sits on top of the blob
+// (unmirrored, the roof hangs underneath, farther from the centre than the facade ring).
 const PLANETS = [
-  { name: 'LITTLE PLANET · above the roof', centre: [0, 60, 3], radius: 60 },
-  { name: 'INSIDE OUT · under the floor', centre: [0, -40, 3], radius: 80 },
-  { name: 'PIAZZA PEARL · on the skylight', centre: [0, 9.6, 3], radius: 18 },
+  { name: 'BLOB PLANET · above the roof', centre: [0, 60, 3], radius: 60, flip: true },
 ];
 
 function makePlanetModifier(u) {
   return dyno.dynoBlock({ gsplat: dyno.Gsplat }, { gsplat: dyno.Gsplat }, ({ gsplat }) => {
     const d = new dyno.Dyno({
-      inTypes: { gsplat: dyno.Gsplat, centre: 'vec3', radius: 'float', mixAmt: 'float' },
+      inTypes: { gsplat: dyno.Gsplat, centre: 'vec3', radius: 'float', mixAmt: 'float', flipY: 'float', mirrorY: 'float' },
       outTypes: { gsplat: dyno.Gsplat },
       globals: () => [dyno.unindent(/* glsl */ `
         vec4 qmul(vec4 a, vec4 b) { return vec4(a.w*b.xyz + b.w*a.xyz + cross(a.xyz, b.xyz), a.w*b.w - dot(a.xyz, b.xyz)); }
@@ -70,16 +71,23 @@ function makePlanetModifier(u) {
           vec3 n = p * inversesqrt(r2);               // radial unit
           vec3 pInv = c + p * k;
           float kk = mix(1.0, k, m);
+          // flip: mirror the inverted world about y = mirrorY (the ground-sphere's centre height) so the planet stays put but turns right side up
+          vec3 pFlip = vec3(pInv.x, 2.0 * ${inputs.mirrorY} - pInv.y, pInv.z);
+          pInv = mix(pInv, pFlip, ${inputs.flipY});
           ${outputs.gsplat}.center = mix(${inputs.gsplat}.center, pInv, m);
           ${outputs.gsplat}.scales = ${inputs.gsplat}.scales * kk;
           // reflect the ellipsoid across the plane normal to n == rotate 180 deg about n; slerp by m via the axis-angle
           float ang = m * 3.14159265;
           vec4 qn = vec4(n * sin(ang * 0.5), cos(ang * 0.5));
-          ${outputs.gsplat}.quaternion = qmul(qn, ${inputs.gsplat}.quaternion);
+          vec4 q1 = qmul(qn, ${inputs.gsplat}.quaternion);
+          // the y-mirror of a centrally symmetric ellipsoid == rotation 180 deg about Y
+          float angF = m * ${inputs.flipY} * 3.14159265;
+          vec4 qf = vec4(0.0, sin(angF * 0.5), 0.0, cos(angF * 0.5));
+          ${outputs.gsplat}.quaternion = qmul(qf, q1);
         }
       `),
     });
-    gsplat = d.apply({ gsplat, centre: u.centre, radius: u.radius, mixAmt: u.mix }).gsplat;
+    gsplat = d.apply({ gsplat, centre: u.centre, radius: u.radius, mixAmt: u.mix, flipY: u.flip, mirrorY: u.mirrorY }).gsplat;
     return { gsplat };
   });
 }
@@ -89,7 +97,9 @@ export async function buildSplats(renderer, scene, meta, opts = {}) {
   const state = { visible: opts.visible !== false, warp: false, warpMix: 0, planet: 0, entries: [], meshes: [], ready: false, error: null };
   const group = new THREE.Group(); group.name = 'splats'; scene.add(group);
   let spark = null;
-  const u = { centre: dyno.dynoVec3(new THREE.Vector3(...PLANETS[0].centre)), radius: dyno.dynoFloat(PLANETS[0].radius), mix: dyno.dynoFloat(0) };
+  const u = { centre: dyno.dynoVec3(new THREE.Vector3(...PLANETS[0].centre)), radius: dyno.dynoFloat(PLANETS[0].radius), mix: dyno.dynoFloat(0), flip: dyno.dynoFloat(PLANETS[0].flip ? 1 : 0), mirrorY: dyno.dynoFloat(0) };
+  const mirrorFor = (p) => p.centre[1] - (p.radius * p.radius) / (2 * Math.max(Math.abs(p.centre[1]), 1e-3));   // ground plane y=0 -> sphere centre height
+  u.mirrorY.value = mirrorFor(PLANETS[0]);
   const modifier = makePlanetModifier(u);
   const toGame = utmToGame(meta);
 
@@ -120,7 +130,8 @@ export async function buildSplats(renderer, scene, meta, opts = {}) {
 
   function setPlanet(i) {
     state.planet = ((i % PLANETS.length) + PLANETS.length) % PLANETS.length; const p = PLANETS[state.planet];
-    u.centre.value.set(...p.centre); u.radius.value = p.radius;
+    u.centre.value.set(...p.centre); u.radius.value = p.radius; u.flip.value = p.flip ? 1 : 0; u.mirrorY.value = mirrorFor(p);
+    for (const m of state.meshes) m.updateVersion();
     return p;
   }
   function update(dt) {
@@ -139,7 +150,9 @@ export async function buildSplats(renderer, scene, meta, opts = {}) {
   }
   function api() {
     return {
-      state, group, PLANETS, planet: () => PLANETS[state.planet], setPlanet, update, nudge, exportManifest, utmToGame: toGame,
+      state, group, PLANETS, planet: () => PLANETS[state.planet], setPlanet, update, nudge, exportManifest, utmToGame: toGame, uniforms: u,
+      touch: () => { for (const m of state.meshes) m.updateVersion(); },
+      setFlip: (on) => { u.flip.value = on ? 1 : 0; PLANETS[state.planet].flip = !!on; for (const m of state.meshes) m.updateVersion(); },
       toggle: () => { state.visible = !state.visible; group.visible = state.visible; return state.visible; },
       toggleWarp: () => { state.warp = !state.warp; return state.warp; },
       count: () => state.meshes.length,

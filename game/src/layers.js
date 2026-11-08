@@ -1,16 +1,17 @@
-// ADMIN panel: LAYERS (every part of the model on/off, each splat scan on/off) and PROPERTIES of the selected scan
-// (position, rotation, scale in the game frame; copies the manifest with the result). White, left, like the other
-// Admin panels; shown only in ADMIN mode.
+// ADMIN panel: LAYERS (every part of the model on/off, each splat scan on/off), PROPERTIES as sliders (pool skin fillet,
+// tile line, tile size, water level, the planet), and the registration of the selected scan. White, left, like the
+// other Admin panels; shown only in ADMIN mode.
 import * as THREE from 'three';
 
 export function buildLayers(spec, splats, opts = {}) {
   const el = document.createElement('div'); el.id = 'layers';
-  el.style.cssText = 'position:fixed;left:0;top:0;bottom:0;width:260px;overflow:auto;background:#fff;color:#000;font:12px/1.5 ui-monospace,Menlo,monospace;padding:14px 16px;box-sizing:border-box;display:none;z-index:20;border-right:1px solid #ddd;';
+  el.style.cssText = 'position:fixed;left:0;top:0;bottom:0;width:280px;overflow:auto;background:#fff;color:#000;font:12px/1.5 ui-monospace,Menlo,monospace;padding:14px 16px;box-sizing:border-box;display:none;z-index:20;border-right:1px solid #ddd;';
   document.body.appendChild(el);
   const layers = spec.map((s) => ({ ...s, on: s.on !== false }));
-  let selected = null;
+  const props = opts.props || [];            // [{ group, label, get, set, min, max, step, unit, fmt, kind: 'range' | 'toggle' }]
+  let selected = null; const syncers = []; let dragging = null;
 
-  function objectsOf(l) { try { return (l.objects ? l.objects() : []).filter(Boolean); } catch (e) { return []; } }
+  function objectsOf(l) { try { return (l.objects ? l.objects() : []).map((o) => (o && o.isObject3D ? o : o && o.mesh && o.mesh.isObject3D ? o.mesh : null)).filter(Boolean); } catch (e) { return []; } }
   function apply(l) { if (l.set) l.set(l.on); for (const o of objectsOf(l)) { o.visible = l.on; o.userData.layerOff = !l.on; } }
   function enforce() { for (const l of layers) if (!l.on) for (const o of objectsOf(l)) if (o.visible) o.visible = false; }
 
@@ -21,7 +22,27 @@ export function buildLayers(spec, splats, opts = {}) {
     if (selectable) { t.style.textDecoration = 'underline dotted'; t.addEventListener('click', (e) => { e.preventDefault(); selected = selectable; render(); }); }
     r.append(cb, t); return r;
   }
-  function h(txt) { const d = document.createElement('div'); d.textContent = txt; d.style.cssText = 'letter-spacing:.2em;margin:14px 0 6px;font-weight:600;'; return d; }
+  function h(txt, top = 14) { const d = document.createElement('div'); d.textContent = txt; d.style.cssText = `letter-spacing:.2em;margin:${top}px 0 6px;font-weight:600;`; return d; }
+  function sub(txt) { const d = document.createElement('div'); d.textContent = txt; d.style.cssText = 'margin:8px 0 2px;color:#444;letter-spacing:.1em;'; return d; }
+  function fmtOf(p) { return p.fmt || ((v) => (Math.abs(v) >= 100 ? v.toFixed(0) : v.toFixed(2)) + (p.unit ? ' ' + p.unit : '')); }
+  function slider(p) {
+    const w = document.createElement('div'); w.style.cssText = 'margin:2px 0 4px;';
+    const top = document.createElement('div'); top.style.cssText = 'display:flex;justify-content:space-between;gap:8px;';
+    const lab = document.createElement('span'); lab.textContent = p.label; const val = document.createElement('span'); val.style.cssText = 'color:#000;min-width:64px;text-align:right;';
+    top.append(lab, val);
+    const i = document.createElement('input'); i.type = 'range'; i.min = p.min; i.max = p.max; i.step = p.step || 0.01; i.value = p.get();
+    i.style.cssText = 'width:100%;margin:0;accent-color:#000;height:14px;';
+    const f = fmtOf(p); val.textContent = f(+i.value);
+    i.addEventListener('pointerdown', () => { dragging = i; }); i.addEventListener('pointerup', () => { dragging = null; });
+    i.addEventListener('input', () => { const v = parseFloat(i.value); p.set(v); val.textContent = f(p.get()); });
+    i.addEventListener('dblclick', () => { if (p.reset != null) { p.set(p.reset); i.value = p.get(); val.textContent = f(p.get()); } });
+    syncers.push(() => { if (dragging === i) return; const v = p.get(); if (Math.abs(parseFloat(i.value) - v) > 1e-6) { i.value = v; val.textContent = f(v); } });
+    w.append(top, i); return w;
+  }
+  function toggle(p) {
+    const r = row(p.label, !!p.get(), (v) => p.set(v)); const cb = r.querySelector('input');
+    syncers.push(() => { const v = !!p.get(); if (cb.checked !== v) cb.checked = v; }); return r;
+  }
   function num(label, value, step, onInput) {
     const w = document.createElement('label'); w.style.cssText = 'display:flex;gap:8px;align-items:center;';
     const t = document.createElement('span'); t.textContent = label; t.style.width = '28px';
@@ -31,18 +52,30 @@ export function buildLayers(spec, splats, opts = {}) {
   }
 
   function render() {
-    el.textContent = '';
-    const title = h('LAYERS'); title.style.marginTop = '0'; el.appendChild(title);
+    el.textContent = ''; syncers.length = 0;
+    el.appendChild(h('LAYERS', 0));
     for (const l of layers) el.appendChild(row(l.name, l.on, (v) => { l.on = v; apply(l); }));
-    // splats: the group, then one row per scan
     if (splats) {
-      const g = splats.state; const gRow = row('SPLATS (Scaniverse)', g.visible, () => { splats.toggle(); render(); }); el.appendChild(gRow);
+      const g = splats.state; el.appendChild(row('SPLATS (Scaniverse)', g.visible, () => { splats.toggle(); render(); }));
       for (const e of g.entries) {
         if (!e.mesh) { const d = document.createElement('div'); d.style.cssText = 'padding-left:14px;color:#999;'; d.textContent = `${e.space || e.file} · ${e.missing ? 'file missing' : 'off'}`; el.appendChild(d); continue; }
         el.appendChild(row(e.space || e.file, e.mesh.visible, (v) => { e.mesh.visible = v; }, 1, e));
       }
+    }
+    // PROPERTIES: sliders by group
+    if (props.length) {
       el.appendChild(h('PROPERTIES'));
-      if (!selected || !selected.mesh) { const d = document.createElement('div'); d.style.color = '#666'; d.textContent = 'click a scan name to edit its registration'; el.appendChild(d); }
+      let grp = null;
+      for (const p of props) {
+        if (p.group !== grp) { grp = p.group; el.appendChild(sub(grp)); }
+        el.appendChild(p.kind === 'toggle' ? toggle(p) : slider(p));
+      }
+      const hint = document.createElement('div'); hint.style.cssText = 'color:#888;margin-top:4px;'; hint.textContent = 'double-click a slider to reset it'; el.appendChild(hint);
+    }
+    // registration of the selected scan
+    if (splats) {
+      el.appendChild(h('REGISTRATION'));
+      if (!selected || !selected.mesh) { const d = document.createElement('div'); d.style.color = '#666'; d.textContent = 'click a scan name above to edit its registration'; el.appendChild(d); }
       else {
         const m = selected.mesh; const e = new THREE.Euler().setFromQuaternion(m.quaternion, 'YXZ');
         const name = document.createElement('div'); name.textContent = `${selected.space || selected.file} · frame ${selected.frame || 'scan'}`; name.style.marginBottom = '4px'; el.appendChild(name);
@@ -60,5 +93,5 @@ export function buildLayers(spec, splats, opts = {}) {
     if (opts.footer) { const f = document.createElement('div'); f.style.cssText = 'color:#666;margin-top:16px;'; f.textContent = opts.footer; el.appendChild(f); }
   }
   render();
-  return { el, layers, render, enforce, show: (v) => { el.style.display = v ? 'block' : 'none'; if (v) render(); }, get selected() { return selected; } };
+  return { el, layers, render, enforce, sync: () => { for (const s of syncers) s(); }, show: (v) => { el.style.display = v ? 'block' : 'none'; if (v) render(); }, get selected() { return selected; } };
 }

@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Cal Academy 3D assets</title>
+<style>
+  html, body { margin: 0; background: #fff; color: #000; font: 13px/1.4 ui-monospace, Menlo, monospace; }
+  #grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; padding: 18px; }
+  .tile { border: 1px solid #ddd; }
+  .tile canvas { display: block; width: 100%; aspect-ratio: 1 / 1; background: #fff; }
+  .cap { padding: 6px 8px; border-top: 1px solid #ddd; }
+  .cap b { display: block; }
+  .cap span { color: #666; }
+  #title { padding: 18px 18px 0; letter-spacing: .2em; }
+</style>
+<script type="importmap">
+{ "imports": { "three": "./vendor/three/three.module.js", "three/addons/": "./vendor/three/addons/" } }
+</script>
+</head>
+<body>
+<div id="title">CAL ACADEMY · 3D ASSETS · <span id="count"></span></div>
+<div id="grid"></div>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { PLYLoader } from 'three/addons/loaders/PLYLoader.js';
+// one offscreen renderer draws every asset in turn; each tile keeps a copy of the pixels
+const SIZE = 512;
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true, alpha: true });
+renderer.setSize(SIZE, SIZE); renderer.setPixelRatio(1); renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.ACESFilmicToneMapping;
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0xffffff);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8899aa, 1.2)); const sun = new THREE.DirectionalLight(0xffffff, 1.6); sun.position.set(3, 5, 4); scene.add(sun);
+const camera = new THREE.PerspectiveCamera(35, 1, 0.01, 10000);
+const grid = document.getElementById('grid');
+const q = new URLSearchParams(location.search);
+const items = (q.get('items') || '').split(',').filter(Boolean);
+const manifest = await (await fetch('./assets/props/manifest_sheet.json').catch(() => null))?.json?.().catch(() => null) ?? null;
+const list = manifest || items.map((n) => ({ name: n, url: `./assets/props/${n}/scene.gltf`, kind: 'gltf' }));
+document.getElementById('count').textContent = `${list.length} assets`;
+const gltf = new GLTFLoader(); const ply = new PLYLoader();
+function frame(obj, az = 0.6, el = 0.35) {
+  const box = new THREE.Box3().setFromObject(obj); const size = box.getSize(new THREE.Vector3()); const c = box.getCenter(new THREE.Vector3());
+  const r = Math.max(size.x, size.y, size.z) * 0.5; const d = r / Math.tan(THREE.MathUtils.degToRad(35) / 2) * 1.15;
+  camera.position.set(c.x + d * Math.cos(el) * Math.sin(az), c.y + d * Math.sin(el), c.z + d * Math.cos(el) * Math.cos(az)); camera.near = d / 100; camera.far = d * 10; camera.updateProjectionMatrix(); camera.lookAt(c);
+  return { size, c };
+}
+for (const it of list) {
+  const tile = document.createElement('div'); tile.className = 'tile'; const cv = document.createElement('canvas'); cv.width = SIZE; cv.height = SIZE; const cap = document.createElement('div'); cap.className = 'cap'; cap.innerHTML = `<b>${it.name}</b><span>loading…</span>`; tile.append(cv, cap); grid.appendChild(tile);
+  try {
+    let obj;
+    if (it.kind === 'ply') {
+      const g = await ply.loadAsync(it.url); g.computeVertexNormals();
+      obj = g.index ? new THREE.Mesh(g, new THREE.MeshStandardMaterial({ vertexColors: g.hasAttribute('color'), flatShading: true })) : new THREE.Points(g, new THREE.PointsMaterial({ size: it.pointSize || 0.3, vertexColors: g.hasAttribute('color'), sizeAttenuation: true }));
+      if (it.yup === false) obj.rotation.x = -Math.PI / 2;
+    } else { const r = await gltf.loadAsync(it.url); obj = r.scene; }
+    scene.add(obj); const { size } = frame(obj, it.az ?? 0.6, it.el ?? 0.35); renderer.render(scene, camera);
+    cv.getContext('2d').drawImage(renderer.domElement, 0, 0); scene.remove(obj);
+    obj.traverse((o) => { if (o.geometry) o.geometry.dispose(); if (o.material) { const ms = Array.isArray(o.material) ? o.material : [o.material]; for (const m of ms) { for (const k in m) if (m[k] && m[k].isTexture) m[k].dispose(); m.dispose(); } } });
+    cap.innerHTML = `<b>${it.name}</b><span>${it.source || ''}${it.source ? ' · ' : ''}${size.x.toFixed(1)} × ${size.y.toFixed(1)} × ${size.z.toFixed(1)} m${it.license ? ' · ' + it.license : ''}</span>`;
+  } catch (e) { cap.innerHTML = `<b>${it.name}</b><span>failed: ${String(e).slice(0, 80)}</span>`; }
+}
+window.__sheetDone = true;
+</script>
+</body>
+</html>

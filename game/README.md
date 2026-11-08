@@ -17,7 +17,9 @@ Q ride down, F flood or drain, 1/2/3 water presets, C domemaster view, G registr
 T / Shift+T tilt ±5°, P save a 4096² domemaster PNG, M flood-zone plan, N lidar grid, H help.
 
 ADMIN mode (` key, or `?admin=1`, sticky per browser): OrbitControls orbit / zoom / pan with the mouse, WASD + Q/E fly
-through walls, Shift fast, physics and breathing off. V splats, X planet warp, Shift+X next planet.
+through walls, Shift fast, physics and breathing off. The white LAYERS panel: every part of the model on/off, each splat
+scan on/off, PROPERTIES sliders (pool-skin fillet radius, tile line, tile size, water level, the blob planet's centre and
+radius), and the registration of the selected scan. V splats, X planet warp, Shift+X flips the planet.
 
 URL params for scripted captures: `?water=9.3&pos=x,y,z&look=x,y,z&dome=1&grid=1&tilt=30&map=1&nohud=1&admin=1&splats=0&planet=1`
 
