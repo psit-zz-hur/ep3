@@ -15,7 +15,7 @@ export const PLAQUES = [
 ];
 
 export function buildPlaques(scene) {
-  const group = new THREE.Group(); scene.add(group);
+  const group = new THREE.Group(); group.name = 'plaques'; scene.add(group);
   const texs = [];
   for (const p of PLAQUES) {
     const c = document.createElement('canvas'); c.width = 512; c.height = 320; const g = c.getContext('2d');

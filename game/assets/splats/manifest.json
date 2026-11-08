@@ -2,11 +2,18 @@
  "note": "Scaniverse splats of the Academy interiors. Files are git-ignored (*.spz / *.ply); this manifest is the registration record. frame: game | utm10n | scan. See README.md here.",
  "scans": [
   {
-   "space": "lidar_dsm",
-   "file": "lidar_dsm.ply",
+   "space": "lidar_building",
+   "file": "lidar_building.ply",
    "frame": "game",
    "enabled": true,
-   "note": "synthetic: the 0.5 m lidar DSM as gaussians, made by scripts/lidar_to_splat_ply.py; a stand-in to test the loader + warp until the Scaniverse scans land"
+   "note": "synthetic: the 0.5 m lidar DSM inside the building footprint (+1 m) as gaussians; scripts/lidar_to_splat_ply.py"
+  },
+  {
+   "space": "lidar_site",
+   "file": "lidar_site.ply",
+   "frame": "game",
+   "enabled": true,
+   "note": "synthetic: the lidar DSM outside the footprint (park, trees, concourse); scripts/lidar_to_splat_ply.py"
   },
   {
    "space": "piazza",

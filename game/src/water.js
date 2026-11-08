@@ -42,5 +42,5 @@ export function buildWater(scene) {
   }
   function setTarget(y) { state.target = y; state.flooding = true; }
   function toggle() { setTarget(state.target > 5 ? L.levels.aquarium - 0.2 : L.levels.roofSlab - 0.3); }
-  return { state, update, setTarget, toggle, isWet, surface: surf };
+  return { meshes: [surf, caus], state, update, setTarget, toggle, isWet, surface: surf };
 }

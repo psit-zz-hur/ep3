@@ -18,6 +18,8 @@ def main():
     ap.add_argument('--pad', type=float, default=40, help='metres around the building bbox')
     ap.add_argument('--step', type=int, default=1)
     ap.add_argument('--out', default=str(A / 'splats' / 'lidar_dsm.ply'))
+    ap.add_argument('--split', action=argparse.BooleanOptionalAction, default=True, help='building footprint and site as two files (default)')
+    ap.add_argument('--grow', type=float, default=1.0, help='metres to grow the footprint before cutting')
     a = ap.parse_args()
     meta = json.load(open(A / 'site_meta.json'))
     dsm = np.asarray(Image.open(A / 'site_dsm_rg.png').convert('RGB')).astype(np.float64)
@@ -48,11 +50,21 @@ def main():
     rows['f_dc_0'] = dc[..., 0].ravel(); rows['f_dc_1'] = dc[..., 1].ravel(); rows['f_dc_2'] = dc[..., 2].ravel()
     rows['opacity'] = 4.0  # sigmoid -> 0.98
     rows['scale_0'] = s; rows['scale_1'] = sy.ravel(); rows['scale_2'] = s; rows['rot_0'] = 1
-    out = pathlib.Path(a.out); out.parent.mkdir(parents=True, exist_ok=True)
-    header = 'ply\nformat binary_little_endian 1.0\nelement vertex %d\n' % n + ''.join('property float %s\n' % k for k in FIELDS) + 'end_header\n'
-    with open(out, 'wb') as f:
-        f.write(header.encode('ascii')); f.write(rows.tobytes())
-    print('wrote', out, n, 'splats', out.stat().st_size // 1024, 'KB; frame = game (identity)')
+    def write(path, sel):
+        path = pathlib.Path(path); path.parent.mkdir(parents=True, exist_ok=True); sub = rows[sel]
+        header = 'ply\nformat binary_little_endian 1.0\nelement vertex %d\n' % len(sub) + ''.join('property float %s\n' % k for k in FIELDS) + 'end_header\n'
+        with open(path, 'wb') as f:
+            f.write(header.encode('ascii')); f.write(sub.tobytes())
+        print('wrote', path, len(sub), 'splats', path.stat().st_size // 1024, 'KB; frame = game (identity)')
+    out = pathlib.Path(a.out)
+    if a.split:
+        # the building footprint (assets/site_bldg_mask.png, grown by --grow metres) on its own file, the rest of the site on another
+        from scipy.ndimage import binary_dilation
+        grow = int(round(a.grow / (res * a.step)))
+        fp = binary_dilation(isb, iterations=grow) if grow > 0 else isb
+        write(out.with_name('lidar_building.ply'), fp.ravel()); write(out.with_name('lidar_site.ply'), ~fp.ravel())
+    else:
+        write(out, np.ones(n, bool))
 
 
 if __name__ == '__main__':

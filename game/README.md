@@ -13,10 +13,13 @@ Everything is vendored (three r170 in `vendor/`), so it runs offline on a dome P
 
 ## Controls
 WASD move, mouse look (click to lock), Space up, Shift down, E sprint / ride the Dive Tower up,
-Q ride down, F flood or drain, 1/2/3 water presets, D domemaster view, G registration grid,
+Q ride down, F flood or drain, 1/2/3 water presets, C domemaster view, G registration grid,
 T / Shift+T tilt ±5°, P save a 4096² domemaster PNG, M flood-zone plan, N lidar grid, H help.
 
-URL params for scripted captures: `?water=9.3&pos=x,y,z&look=x,y,z&dome=1&grid=1&tilt=30&map=1&nohud=1`
+ADMIN mode (` key, or `?admin=1`, sticky per browser): OrbitControls orbit / zoom / pan with the mouse, WASD + Q/E fly
+through walls, Shift fast, physics and breathing off. V splats, X planet warp, Shift+X next planet.
+
+URL params for scripted captures: `?water=9.3&pos=x,y,z&look=x,y,z&dome=1&grid=1&tilt=30&map=1&nohud=1&admin=1&splats=0&planet=1`
 
 ## What is real and what is approximate
 - Exterior shell: the 2023 USGS 3DEP lidar (90 pts/m², public domain) resampled at 0.5 m, rotated into
