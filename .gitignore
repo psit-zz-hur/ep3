@@ -1,0 +1,9 @@
+# heavy, machine-resident data (see HANDOFF.md)
+data/
+captures/
+*.laz
+*.las
+*.copc.laz
+*.spz
+*.ply
+node_modules/

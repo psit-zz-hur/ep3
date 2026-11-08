@@ -5,3 +5,4 @@ assets/*.kmz
 assets/*.skp
 assets/props/*.glb
 assets/props/*.zip
+assets/props/*/
