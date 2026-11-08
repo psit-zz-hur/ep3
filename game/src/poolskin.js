@@ -11,12 +11,14 @@ export function buildPoolSkin(scene, camera) {
     uCamPos: { value: new THREE.Vector3() }, uInvProj: { value: new THREE.Matrix4() }, uInvView: { value: new THREE.Matrix4() },
     uTileTop: { value: L.levels.roofSlab - 0.3 }, uTime: { value: 0 }, uFogColor: { value: new THREE.Color() }, uFogNear: { value: 1 }, uFogFar: { value: 100 },
     uWaterY: { value: -8 }, uSun: { value: new THREE.Vector3(-0.4, 0.8, 0.45).normalize() }, uLight: { value: 1 }, uTileSize: { value: 0.3 }, uFillet: { value: 0.9144 },  // 3 ft
-    uCapital: { value: 1.6 }, uMode: { value: 0 },        // mode 0 = pool tile, 1 = poured concrete
+    uCapital: { value: 1.6 }, uMode: { value: 0 },        // mode 0 = pool tile, 1 = poured concrete, 2 = skatepark (concrete + painted routes)
+    uRoutes: { value: Array.from({ length: 24 }, () => new THREE.Vector4()) }, uRouteN: { value: 0 }, uZones: { value: Array.from({ length: 12 }, () => new THREE.Vector3()) }, uZoneN: { value: 0 }, uBand: { value: 0.8 }, uHatch: { value: 0.6 }, uSteps: { value: 96 },
     uDebug: { value: 0 }, uCaustic: { value: 0 }, uResolution: { value: new THREE.Vector2(1, 1) }, uProj: { value: new THREE.Matrix4() }, uView: { value: new THREE.Matrix4() },
   };
   const P = L; const f = (n) => n.toFixed(2);
   const glsl = `
-    uniform vec3 uCamPos; uniform float uTileTop, uTime, uFogNear, uFogFar, uWaterY, uLight, uTileSize, uFillet, uCaustic, uDebug, uCapital, uMode; uniform vec3 uFogColor, uSun; uniform mat4 uProj, uView;
+    uniform vec3 uCamPos; uniform float uTileTop, uTime, uFogNear, uFogFar, uWaterY, uLight, uTileSize, uFillet, uCaustic, uDebug, uCapital, uMode, uBand, uHatch, uSteps; uniform vec3 uFogColor, uSun; uniform mat4 uProj, uView;
+    uniform vec4 uRoutes[24]; uniform int uRouteN; uniform vec3 uZones[12]; uniform int uZoneN;
     varying vec3 vWorld;
     float sdBox(vec3 p, vec3 c, vec3 b){ vec3 q = abs(p - c) - b; return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)),0.0); }
     float sdSphere(vec3 p, vec3 c, float r){ return length(p - c) - r; }
@@ -91,7 +93,32 @@ export function buildPoolSkin(scene, camera) {
       float wax = 1.0 - smoothstep(0.0, 0.3, uTileTop - p.y); base = mix(base, base * 0.6, wax * 0.5);
       return base;
     }
+    float sdSeg(vec2 p, vec2 a, vec2 b){ vec2 pa = p - a, ba = b - a; float h = clamp(dot(pa, ba) / max(dot(ba, ba), 1e-4), 0.0, 1.0); return length(pa - ba * h); }
+    // Skatepark: troweled concrete (no formwork seams, long trowel sweeps) + painted supergraphics on the floors:
+    // canary hatched bands = routes for skaters, crosshatched discs = places to stand, a canary coping line at the top edge.
+    vec3 skatepark(vec3 p, vec3 n){
+      float m = vnoise(p * 0.25) * 0.55 + vnoise(p * 1.1) * 0.3 + vnoise(vec3(p.x * 0.9, p.y * 0.9, p.z * 6.0)) * 0.15;   // trowel sweeps along z
+      vec3 base = mix(vec3(0.55, 0.55, 0.54), vec3(0.72, 0.71, 0.69), m);
+      vec3 canary = vec3(1.0, 0.835, 0.0), ink = vec3(0.05, 0.05, 0.05);
+      float up = smoothstep(0.55, 0.85, n.y);                              // paint only reads on the floors and the low part of the bowls
+      float paint = 0.0, line = 0.0;
+      float hatch = step(0.5, fract((p.x + p.z) / uHatch));                 // 45 deg stripes
+      float hatch2 = step(0.5, fract((p.x - p.z) / uHatch));
+      for (int i = 0; i < 24; i++) { if (i >= uRouteN) break; vec4 s = uRoutes[i]; float d = sdSeg(p.xz, s.xy, s.zw);
+        float inBand = 1.0 - smoothstep(uBand - 0.03, uBand, d); paint = max(paint, inBand * hatch);
+        line = max(line, (1.0 - smoothstep(0.04, 0.08, abs(d - uBand))) ); }
+      for (int i = 0; i < 12; i++) { if (i >= uZoneN) break; vec3 z = uZones[i]; float d = length(p.xz - z.xy) - z.z;
+        float inZ = 1.0 - smoothstep(-0.03, 0.0, d); paint = max(paint, inZ * max(hatch, hatch2) * 0.9);
+        line = max(line, 1.0 - smoothstep(0.04, 0.08, abs(d)));
+        line = max(line, inZ * (1.0 - smoothstep(0.0, 0.05, abs(length(p.xz - z.xy) - 0.45)))); }   // the small ring = stand here
+      vec3 col = mix(base, canary, paint * up * 0.92);
+      col = mix(col, ink, line * up * 0.85);
+      float coping = 1.0 - smoothstep(0.0, 0.14, uTileTop - p.y); col = mix(col, canary, coping * 0.9);  // painted coping line
+      float wear = vnoise(p * 2.3); col = mix(col, base, (paint + line) * up * 0.25 * wear);             // wheel scuff through the paint
+      return col;
+    }
     vec3 tiles(vec3 p, vec3 n){
+      if (uMode > 1.5) return skatepark(p, n);
       if (uMode > 0.5) return concrete(p, n);
       // triplanar world-space tile grid; grout lines; per-tile tint; darker band rows every 3 m of depth
       vec3 an = abs(n); an /= (an.x + an.y + an.z);
@@ -112,7 +139,7 @@ export function buildPoolSkin(scene, camera) {
       vec3 ro = uCamPos; vec3 rd = normalize(vWorld - uCamPos);
       // start at the camera if it is inside the volume, else at the box surface
       float t = 0.0; float d; vec3 p = ro; bool hit = false;
-      for (int i = 0; i < 160; i++) { p = ro + rd * t; d = map(p); if (d < 0.004 * t + 0.002) { hit = true; break; } t += d * 0.9; if (t > 400.0) break; }
+      for (int i = 0; i < 160; i++) { if (float(i) >= uSteps) break; p = ro + rd * t; d = map(p); if (d < 0.004 * t + 0.002) { hit = true; break; } t += d * 0.9; if (t > 400.0) break; }
       if (!hit) { if (uDebug > 0.5) { gl_FragColor = vec4(1.0, 0.0, 1.0, 1.0); gl_FragDepthEXT = 0.9999; return; } discard; }
       vec3 n = normalAt(p); vec3 col = tiles(p, n);
       if (uDebug > 0.5) { gl_FragColor = vec4(n * 0.5 + 0.5, 1.0); vec4 clipD = uProj * uView * vec4(p, 1.0); gl_FragDepthEXT = (clipD.z / clipD.w) * 0.5 + 0.5; return; }
@@ -131,6 +158,15 @@ export function buildPoolSkin(scene, camera) {
     vertexShader: `varying vec3 vWorld; void main(){ vWorld = (modelMatrix * vec4(position,1.0)).xyz; gl_Position = projectionMatrix * viewMatrix * vec4(vWorld,1.0); }`,
     fragmentShader: glsl,
   });
+  // Supergraphics (Bryan 11/07: 'safety pathway zones that are hatched onto a factory floor, except as routes for skaters to follow, or places to stand')
+  const ROUTES = [
+    [[0, 3], [-28, 26], [-64, 6], [-48, -24], [-8, -22], [0, 3]],                        // east lap: under the whale, past the reef, along the lagoon
+    [[0, 3], [L.planetarium.x - L.domeR + 1.2, 4], [38, -30], [67, -37], [60, -4], [40, 24], [0, 3]],   // west lap: planetarium portal, African Hall, back along the north
+    [[0, 3], [0, 30], [-20, 44], [40, 38], [0, 30]],                                        // north run: the entrance hall, T. rex to the redwood
+  ];
+  const ZONES = [[0, 3, 4.0], [-64, 6, 3.0], [0, 44, 3.0], [-40, 44, 2.5], [40, 38, 2.5], [-60, 20, 2.5], [L.planetarium.x - L.domeR + 1.2, 4, 3.0], [67, -37, 3.0]];
+  let ri = 0; for (const r of ROUTES) for (let i = 0; i + 1 < r.length && ri < 24; i++) u.uRoutes.value[ri++].set(r[i][0], r[i][1], r[i + 1][0], r[i + 1][1]);
+  u.uRouteN.value = ri; ZONES.forEach((z, i) => { if (i < 12) u.uZones.value[i].set(z[0], z[1], z[2]); }); u.uZoneN.value = Math.min(ZONES.length, 12);
   const mesh = new THREE.Mesh(geo, mat); mesh.position.set((B.x0 + B.x1) / 2, (y0 + y1) / 2, (B.z0 + B.z1) / 2); mesh.frustumCulled = false; mesh.renderOrder = -1; mesh.visible = false; scene.add(mesh);
   const state = { enabled: false };
   function update(t, waterY, fog, light) {
@@ -140,5 +176,5 @@ export function buildPoolSkin(scene, camera) {
     // keep the volume box tall enough for the chosen tile line
   }
   return { mesh, state, uniforms: u, update, setTileTop: (y) => { u.uTileTop.value = y; }, get tileTop() { return u.uTileTop.value; },
-    setFillet: (r) => { u.uFillet.value = Math.max(0.05, r); }, setMode: (m) => { u.uMode.value = m; }, get mode() { return u.uMode.value; }, setCapital: (c) => { u.uCapital.value = c; }, get fillet() { return u.uFillet.value; }, setTileSize: (t) => { u.uTileSize.value = Math.max(0.05, t); }, get tileSize() { return u.uTileSize.value; } };
+    setFillet: (r) => { u.uFillet.value = Math.max(0.05, r); }, setMode: (m) => { u.uMode.value = m; }, get mode() { return u.uMode.value; }, get modeName() { return u.uMode.value > 1.5 ? 'SKATEPARK SOCK' : u.uMode.value > 0.5 ? 'CONCRETE SOCK' : 'TILE SOCK'; }, setBand: (b) => { u.uBand.value = b; }, get band() { return u.uBand.value; }, setHatch: (h) => { u.uHatch.value = Math.max(0.1, h); }, get hatch() { return u.uHatch.value; }, ROUTES, ZONES, setCapital: (c) => { u.uCapital.value = c; }, get fillet() { return u.uFillet.value; }, setTileSize: (t) => { u.uTileSize.value = Math.max(0.05, t); }, get tileSize() { return u.uTileSize.value; } };
 }

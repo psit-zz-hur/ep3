@@ -16,6 +16,10 @@ WASD move, mouse look (click to lock), Space up, Shift down, E sprint / ride the
 Q ride down, F flood or drain, 1/2/3 water presets, C domemaster view, G registration grid,
 T / Shift+T tilt ±5°, P save a 4096² domemaster PNG, M flood-zone plan, N lidar grid, H help.
 
+Pool skin (O): I cycles tile / concrete / skatepark. The skatepark skin is troweled concrete with painted supergraphics,
+canary hatched bands as routes for skaters (three laps from the piazza) and crosshatched discs as places to stand, set in
+`src/poolskin.js` (ROUTES, ZONES); `?skin=skatepark`. J (Skateboard Saturdays) drains the building and uses it.
+
 ADMIN mode (` key, or `?admin=1`, sticky per browser): OrbitControls orbit / zoom / pan with the mouse, WASD + Q/E fly
 through walls, Shift fast, physics and breathing off. The white LAYERS panel: every part of the model on/off, each splat
 scan on/off, PROPERTIES sliders (pool-skin fillet radius, tile line, tile size, water level, the blob planet's centre and

@@ -28,6 +28,21 @@ export const PROPS = [
   { file: 'echinophyllia_sp.glb', name: 'Echinophyllia (Viz Studio)', pos: [L.reefTank.x - 4, L.reefTank.bottom, L.reefTank.z - 2], fit: [1.2, 0.5, 1.2] },
 ];
 
+// Photogrammetry textures arrive at 4-8k; on an iGPU that is the lag. Downscale every map to MAX_TEX on load.
+const MAX_TEX = 2048;
+function shrinkTextures(root) {
+  const seen = new Set();
+  root.traverse((o) => {
+    if (!o.material) return; const ms = Array.isArray(o.material) ? o.material : [o.material];
+    for (const m of ms) for (const k of ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'aoMap', 'emissiveMap']) {
+      const tex = m[k]; if (!tex || seen.has(tex) || !tex.image || !tex.image.width) continue; seen.add(tex);
+      const w = tex.image.width, h = tex.image.height; const s = MAX_TEX / Math.max(w, h); if (s >= 1) continue;
+      const c = document.createElement('canvas'); c.width = Math.round(w * s); c.height = Math.round(h * s);
+      c.getContext('2d').drawImage(tex.image, 0, 0, c.width, c.height); tex.image = c; tex.needsUpdate = true;
+    }
+  });
+}
+
 export async function loadProps(scene, onLoaded) {
   const loader = new GLTFLoader(); const loaded = [];
   for (const p of PROPS) {
@@ -36,7 +51,7 @@ export async function loadProps(scene, onLoaded) {
     if (!head || !head.ok) { url = `./assets/props/${base}/scene.gltf`; head = await fetch(url, { method: 'HEAD' }).catch(() => null); }
     if (!head || !head.ok) continue;
     try {
-      const gltf = await loader.loadAsync(url); const root = gltf.scene;
+      const gltf = await loader.loadAsync(url); const root = gltf.scene; shrinkTextures(root);
       const box = new THREE.Box3().setFromObject(root); const size = box.getSize(new THREE.Vector3()); const c = box.getCenter(new THREE.Vector3());
       const s = Math.min(p.fit[0] / size.x, p.fit[1] / size.y, p.fit[2] / size.z);
       root.scale.setScalar(s); root.position.set(p.pos[0] - c.x * s, p.hang ? p.pos[1] - c.y * s : p.pos[1] - box.min.y * s, p.pos[2] - c.z * s);

@@ -20,7 +20,8 @@ import { buildLayers } from './layers.js';
 const q0 = new URLSearchParams(location.search);
 const canvas = document.getElementById('c');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer: true });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.setSize(innerWidth, innerHeight); renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.1;
+const render = { scale: parseFloat(q0.get('scale')) || 1, paused: false, fps: 0 };
+renderer.setPixelRatio(render.scale); renderer.setSize(innerWidth, innerHeight); renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.1;
 const scene = new THREE.Scene(); scene.background = new THREE.Color(0x0b0f14);
 const camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 1500);
 addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
@@ -33,7 +34,7 @@ const fill = new THREE.PointLight(0x7fd0ff, 0.6, 120, 1.5); fill.position.set(0,
 const sky = new THREE.Mesh(new THREE.SphereGeometry(1200, 24, 12), new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, uniforms: {}, vertexShader: 'varying vec3 vP; void main(){ vP=position; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);} ', fragmentShader: 'varying vec3 vP; void main(){ float h = normalize(vP).y; vec3 c = mix(vec3(0.10,0.07,0.12), vec3(0.02,0.03,0.07), clamp(h*2.0,0.0,1.0)); c = mix(vec3(0.45,0.22,0.18), c, clamp(h*6.0+0.2,0.0,1.0)); gl_FragColor=vec4(c,1.0);} ' })); sky.name = 'sky'; scene.add(sky);
 
 const hud = document.getElementById('hud'), help = document.getElementById('help'), clickEl = document.getElementById('click');
-help.textContent = `O skin on/off · I tile/concrete · J Skateboard Saturdays · [ ] skin line · - = fillet radius (6 in) · , . tile size · K fly through the nearest exhibit scan · WASD swim/walk · mouse look · Space up · Shift down · E sprint / ride lift up · Q lift down
+help.textContent = `O skin on/off · I tile / concrete / skatepark · J Skateboard Saturdays · [ ] skin line · - = fillet radius (6 in) · , . tile size · K fly through the nearest exhibit scan · WASD swim/walk · mouse look · Space up · Shift down · E sprint / ride lift up · Q lift down
 F flood / drain · 1 2 3 water presets · C dome view · G registration grid · T tilt ± · P save 4K domemaster
 \` ADMIN mode (orbit / zoom with the mouse, WASD + Q E fly through walls, Shift fast, no physics)
 M flood-zone map · N lidar grid · V splats (Scaniverse) · X planet warp (Shift+X flips it) · H hide help`;
@@ -68,7 +69,7 @@ const splats = await buildSplats(renderer, scene, site.meta, { visible: q0.get('
 let skate = false;
 function setSkate(on) {
   // Skateboard Saturdays: drained, smooth concrete sock to the ceiling, mushroom columns, whale lowered to the floor as a rib-cage arch
-  skate = on; player.state.skate = on; pool.state.enabled = true; pool.setMode(on ? 1 : 0); pool.setTileTop(on ? L.levels.roofSlab + 1.0 : L.levels.roofSlab - 0.3);
+  skate = on; player.state.skate = on; pool.state.enabled = true; pool.setMode(on ? 2 : 0); pool.setTileTop(on ? L.levels.roofSlab + 1.0 : L.levels.roofSlab - 0.3);
   water.setTarget(on ? L.levels.aquarium - 0.2 : water.state.target);
   const whale = scene.getObjectByName('whale-procedural'); if (whale) whale.position.y = on ? 1.9 : L.whale.y;
   document.getElementById('title').textContent = on ? 'SKATEBOARD SATURDAYS · CAL ACADEMY · DESIGN FICTION' : 'FREESWIM FRIDAYS · CAL ACADEMY · DESIGN FICTION';
@@ -88,6 +89,7 @@ addEventListener('keydown', (e) => {
   if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON')) return;
   admin.keys[e.code] = true;
   if (e.code === 'Backquote') { setAdmin(!admin.on); return; }
+  if (e.code === 'KeyR') { render.paused = !render.paused; hud.textContent = (render.paused ? 'PAUSED · R resumes\n' : '') + hud.textContent; return; }
   if (e.code === 'KeyF') water.toggle();
   if (e.code === 'Digit1') water.setTarget(L.levels.aquarium - 0.2);
   if (e.code === 'Digit2') water.setTarget(2.0);
@@ -100,7 +102,7 @@ addEventListener('keydown', (e) => {
   if (e.code === 'KeyN') { gridOn = !gridOn; site.setGrid(gridOn ? 0.35 : 0); }
   if (e.code === 'KeyK') { if (fly.active) fly.stop(); else { let best = null, bd = 1e9; for (const p of loadedProps) { const d = p.box.getCenter(new THREE.Vector3()).distanceTo(camera.position); if (d < bd) { bd = d; best = p; } } fly.start(best); } }
   if (e.code === 'KeyO') { pool.state.enabled = !pool.state.enabled; }
-  if (e.code === 'KeyI') { pool.setMode(pool.mode > 0.5 ? 0 : 1); }
+  if (e.code === 'KeyI') { pool.setMode((Math.round(pool.mode) + 1) % 3); }
   if (e.code === 'KeyJ') setSkate(!skate);
   if (e.code === 'BracketRight') pool.setTileTop(Math.min(pool.tileTop + 0.5, L.levels.roofSlab + 0.2));
   if (e.code === 'BracketLeft') pool.setTileTop(Math.max(pool.tileTop - 0.5, L.levels.aquarium));
@@ -127,11 +129,12 @@ if (q.get('skate') === '1') setSkate(true);
 { let m = null; try { m = localStorage.getItem('fs.mode'); } catch (e) {} if (q.get('admin') === '1' || (q.get('admin') == null && m === 'admin')) setAdmin(true); if (q.get('admin') === '0') setAdmin(false); }
 if (q.get('planet') != null && q.get('planet') !== '0') { splats.setPlanet((parseInt(q.get('planet'), 10) || 1) - 1); splats.state.warp = true; }
 if (q.get('skin') === 'concrete') pool.setMode(1);
+if (q.get('skin') === 'skatepark') pool.setMode(2);
 if (q.get('pooldebug') === '1') pool.uniforms.uDebug.value = 1;
 if (q.has('tiletop')) pool.setTileTop(parseFloat(q.get('tiletop')));
 if (q.has('fillet')) pool.setFillet(parseFloat(q.get('fillet')));
 if (q.has('tile')) pool.setTileSize(parseFloat(q.get('tile')));
-const loadedProps = await loadProps(scene, (p) => console.log('prop', p.name));
+const loadedProps = q.get('props') === '0' ? [] : await loadProps(scene, (p) => console.log('prop', p.name));   // ?props=0 skips the Sketchfab props (fast loads, headless stills)
 const fly = makeFlythrough(camera);
 layers = buildLayers([
   { name: 'Lidar site (2023 DSM)', objects: () => [site.mesh] },
@@ -146,9 +149,15 @@ layers = buildLayers([
 ], splats, {
   footer: '` leaves ADMIN · V / X also toggle splats and the planet warp',
   props: [
+    { group: 'RENDER', label: 'PAUSE RENDER (R)', kind: 'toggle', get: () => render.paused, set: (v) => { render.paused = v; } },
+    { group: 'RENDER', label: 'render scale (device px)', get: () => render.scale, set: (v) => { render.scale = v; renderer.setPixelRatio(v); renderer.setSize(innerWidth, innerHeight); }, min: 0.35, max: 2, step: 0.05, reset: 1, fmt: (v) => `${v.toFixed(2)}× · ${Math.round(innerWidth * v)}×${Math.round(innerHeight * v)}` },
+    { group: 'RENDER', label: 'pool-skin raymarch steps', get: () => pool.uniforms.uSteps.value, set: (v) => { pool.uniforms.uSteps.value = Math.round(v); }, min: 24, max: 160, step: 4, reset: 96, fmt: (v) => `${Math.round(v)}` },
+    { group: 'RENDER', label: 'props (Sketchfab) drawn', kind: 'toggle', get: () => loadedProps.every((p) => p.root.visible), set: (v) => { for (const p of loadedProps) p.root.visible = v; } },
     // POOL SKIN (poolskin.js): the raymarched sock below the tile line
     { group: 'POOL SKIN', label: 'skin on', kind: 'toggle', get: () => pool.state.enabled, set: (v) => { pool.state.enabled = v; } },
-    { group: 'POOL SKIN', label: 'concrete (off = tile)', kind: 'toggle', get: () => pool.mode > 0.5, set: (v) => pool.setMode(v ? 1 : 0) },
+    { group: 'POOL SKIN', label: 'skin', get: () => Math.round(pool.mode), set: (v) => pool.setMode(Math.round(v)), min: 0, max: 2, step: 1, reset: 0, fmt: (v) => ['tile', 'concrete', 'skatepark'][Math.round(v)] },
+    { group: 'POOL SKIN', label: 'route band width', get: () => pool.band, set: (v) => pool.setBand(v), min: 0.2, max: 3, step: 0.05, reset: 0.8, unit: 'm' },
+    { group: 'POOL SKIN', label: 'hatch pitch', get: () => pool.hatch, set: (v) => pool.setHatch(v), min: 0.15, max: 2, step: 0.05, reset: 0.6, unit: 'm' },
     { group: 'POOL SKIN', label: 'fillet radius', get: () => pool.fillet, set: (v) => pool.setFillet(v), min: 0.05, max: 6, step: 0.0254, reset: 0.9144, fmt: (v) => `${(v / 0.3048).toFixed(1)} ft · ${v.toFixed(2)} m` },
     { group: 'POOL SKIN', label: 'tile line (height)', get: () => pool.tileTop, set: (v) => pool.setTileTop(v), min: L.levels.aquarium, max: L.levels.roofSlab + 1.0, step: 0.05, reset: L.levels.roofSlab - 0.3, unit: 'm' },
     { group: 'POOL SKIN', label: 'tile size', get: () => pool.tileSize, set: (v) => pool.setTileSize(v), min: 0.05, max: 2.0, step: 0.01, reset: 0.3, fmt: (v) => `${(v * 100).toFixed(0)} cm` },
@@ -170,8 +179,10 @@ layers.show(admin.on);
 if (q.get('nohud') === '1') { hud.style.display = 'none'; help.style.display = 'none'; clickEl.style.display = 'none'; document.getElementById('title').style.display = 'none'; }
 
 const clock = new THREE.Clock(); let acc = 0;
+let fpsN = 0, fpsT = 0;
 function frame() {
-  const dt = Math.min(clock.getDelta(), 0.05); const t = clock.elapsedTime;
+  if (render.paused) { if (admin.on) layers.sync(); requestAnimationFrame(frame); return; }
+  const dt = Math.min(clock.getDelta(), 0.05); const t = clock.elapsedTime; fpsN++; fpsT += dt; if (fpsT > 0.5) { render.fps = Math.round(fpsN / fpsT); fpsN = 0; fpsT = 0; }
   camera.position.y -= prevBreath;            // remove last frame's breath offset before physics
   const ps = admin.on ? (fly.active ? fly.update(dt) : adminMove(dt), player.state) : fly.active ? (fly.update(dt), player.state) : player.update(dt, water);
   const env = water.update(dt, t, camera.position, !!ps.zone);
@@ -194,11 +205,11 @@ function frame() {
   acc += dt; if (acc > 0.1) {
     acc = 0; const p = camera.position; const lay = env.wet ? env.layer.name : (ps.zone ? `DRY · ${ps.zone}${ps.zone === 'airlock' ? ' · ' + al.phase : ''}` : 'AIR · ' + (p.y > L.levels.roofSlab ? 'roof' : 'inside'));
     const near = fish.nearby(p, 12); const nearTxt = Object.entries(near).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([n, c]) => `${c} ${n}`).join(' · ');
-    hud.textContent = `${admin.on ? 'ADMIN · orbit / fly · ` back to play\n' : ''}water ${water.state.level.toFixed(1)} m  depth ${env.wet ? (water.state.level - p.y).toFixed(1) : '0.0'} m\n${lay}\nxyz ${p.x.toFixed(0)} ${p.y.toFixed(1)} ${p.z.toFixed(0)}${pool.state.enabled ? `\n${pool.mode > 0.5 ? 'CONCRETE SOCK' : 'TILE SOCK'} · line ${pool.tileTop.toFixed(1)} m · fillet ${(pool.fillet / 0.3048).toFixed(1)} ft · tile ${(pool.tileSize * 100).toFixed(0)} cm` : ''}${dome.state.enabled ? `\nDOME 180° · tilt ${dome.state.tiltDeg}° · grid ${dome.state.gridMix ? 'on' : 'off'}` : ''}${splats.count() ? `\nSPLATS ${splats.state.visible ? splats.count() + ' scans' : 'off'}${splats.state.warpMix > 0.01 ? ' · ' + splats.planet().name + ' ' + Math.round(splats.state.warpMix * 100) + '%' : ''}` : ''}${nearTxt ? '\n' + nearTxt : ''}`;
+    hud.textContent = `${admin.on ? 'ADMIN · orbit / fly · ` back to play · ' + render.fps + ' fps · R pauses\n' : ''}water ${water.state.level.toFixed(1)} m  depth ${env.wet ? (water.state.level - p.y).toFixed(1) : '0.0'} m\n${lay}\nxyz ${p.x.toFixed(0)} ${p.y.toFixed(1)} ${p.z.toFixed(0)}${pool.state.enabled ? `\n${pool.modeName} · line ${pool.tileTop.toFixed(1)} m · fillet ${(pool.fillet / 0.3048).toFixed(1)} ft · tile ${(pool.tileSize * 100).toFixed(0)} cm` : ''}${dome.state.enabled ? `\nDOME 180° · tilt ${dome.state.tiltDeg}° · grid ${dome.state.gridMix ? 'on' : 'off'}` : ''}${splats.count() ? `\nSPLATS ${splats.state.visible ? splats.count() + ' scans' : 'off'}${splats.state.warpMix > 0.01 ? ' · ' + splats.planet().name + ' ' + Math.round(splats.state.warpMix * 100) + '%' : ''}` : ''}${nearTxt ? '\n' + nearTxt : ''}`;
     if (map.visible()) map.draw(p, water.state.level);
     if (admin.on) layers.sync();
   }
   requestAnimationFrame(frame);
 }
 frame();
-window.__fs = { scene, camera, water, dome, player, fish, L, pool, renderer, splats, admin, orbit, setAdmin, layers };
+window.__fs = { scene, camera, water, dome, player, fish, L, pool, renderer, splats, admin, orbit, setAdmin, layers, render };
