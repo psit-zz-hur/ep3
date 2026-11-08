@@ -40,7 +40,7 @@ def main():
         if any(k in only for k in ('panel', 'planet', 'skate')):
             setup(pg)
         if 'panel' in only:
-            pg.evaluate("""() => { const F = window.__fs; F.layers.el.style.display = 'block'; document.getElementById('help').style.display = ''; F.camera.position.set(120, 70, 190); F.camera.lookAt(0, 0, 0); F.orbit.target.set(0, 0, 0); }""")
+            pg.evaluate("""() => { const F = window.__fs; F.layers.el.style.display = 'block'; F.camera.position.set(120, 70, 190); F.camera.lookAt(0, 0, 0); F.orbit.target.set(0, 0, 0); }""")
             for _ in range(3): pg.evaluate("() => new Promise(r => requestAnimationFrame(() => r()))")
             pg.screenshot(path=str(OUT / '11_admin_panel_sliders.png'), timeout=600000); print('shot panel', file=sys.stderr)
             pg.evaluate("""() => { const F = window.__fs; F.layers.el.style.display = 'none'; document.getElementById('help').style.display = 'none'; }""")

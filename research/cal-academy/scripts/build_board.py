@@ -40,11 +40,14 @@ def main():
         ('DONE', 'Sketchfab · 16 props in the halls', 'CC BY ×14 · CC BY-NC-SA ×2 (whale)'),
         ('DONE', 'skatepark skin + supergraphics', 'I cycles tile / concrete / skatepark'),
         ('DONE', 'Rhino A · mesh + massing + splats', 'CALACADEMY_SITE_2026_11_07A.3dm'),
-        ('DONE' if ept.exists() else 'RUNNING', 'Rhino B · + raw point cloud (EPT)', 'POINTCLOUD layer, 1.5 M pts'),
+        ('DONE', 'Rhino B · + raw point cloud (EPT)', 'POINTCLOUD layer, 1.5 M pts'),
         ('DONE', 'all 3D assets in one folder', 'CALACADEMY_3D_ASSETS · %d GLB' % len(props)),
         ('DONE', 'lidar DSM mesh → THE VIEW [1]', 'OBJ + PLY + frame JSON, sent'),
         ('DONE', 'dataset census · files 15 + 15b', 'two sessions, pushed'),
         ('RUNNING', 'laptop-bootstrap.sh', 'USGS throttles to 128 KB/s; tile 2 of 6'),
+        ('DONE', 'ADMIN panel v3 · Rhino model', 'Viewport / Layers / Properties: selection'),
+        ('DONE', 'camera: FOV, axon, circular 360°', 'Camera and Dome rows'),
+        ('RUNNING', 'planet of the park quadrant', 'THE TERRITORY proof live · rasters in prep'),
         ('BRYAN', 'Scaniverse scans off the phone', 'SPZ + PLY → Downloads → ingest_captures.py'),
         ('BRYAN', '3D Warehouse massing model', 'login, save as game/assets/cas_3dwarehouse.glb'),
     ]
@@ -86,7 +89,8 @@ def main():
   <div class="c3 r2">{img('17_rhino_content.png', 'the Rhino file: lidar DSM (points), building massing, envelope; Z-up, metres, origin = main floor · A open in Rhino 8, B adds the raw cloud')}</div>
   <div class="c6 r2">{img('16_assets_contact_sheet.png', 'CONTACT SHEET: all 16 Sketchfab props + the two lidar splats, live at localhost:8080/contact_sheet.html · files in CALACADEMY_3D_ASSETS/')}</div>
   <div class="c3 r2">{img('08_ojos_mesh_glitch.jpg', 'the lidar DSM mesh from below (your screenshot 18:56): the heightfield skirts you liked · handed to THE VIEW [1] as OBJ + PLY')}</div>
-  <div class="c3 r2">{img('07_layers_building_off.jpg', 'layers: building splat off, lidar mesh off → massing + park trees as gaussians')}</div>
+  <div class="c3 r2">{img('20_skin_axon_from_outside.png', 'the skins alone in axonometric from outside the museum: lidar, building and sky layers off · Camera › axon SW')}</div>
+  <div class="c3 r2">{img('21_planet_proof_territory.jpg', 'THE TERRITORY’s first planet of the Academy tile (our lidar PLY + frame): sphere, octa, icosa · live at 127.0.0.1:8803/?mode=trial · the quadrant rasters are in preparation')}</div>
   <div class="c3 r2 panel"><h2>STATUS</h2><table>{rows}</table></div>
   <div class="c3 r2 panel top"><h2>DATA · FIRST VISUALIZATION PICKS (files 15 + 15b)</h2><ul>{top_rows}</ul><p style="color:#666;margin:10px 0 0">Proposal: start with <b>Ornithology window-strikes</b> (692 birds on the facades, a story only this building can tell) and the <b>Philippine fishes by depth</b> in the reef tank.</p></div>
   <div class="c3 r2 panel"><h2>3D ASSETS · ONE FOLDER</h2><ul>{assets_rows}<li>SPLAT lidar_building / lidar_site (synthetic) <span>PLY</span></li><li>LIDAR_DSM_mesh_0p5m_Yup <span>44 MB PLY</span></li><li>POINTCLOUD lidar2023 site <span>{'ready' if ept.exists() else 'fetching'}</span></li><li>CALACADEMY_SITE A / B <span>3dm</span></li></ul></div>

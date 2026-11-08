@@ -1,0 +1,28 @@
+start
+active doc: C:\Users\bryan\Documents\Claude\ep3\rhino\CALACADEMY_SITE_2026_11_07B.3dm modified=True units=Meters
+import objects: 113
+types: {'Mesh': 113}
+bbox: min(-398.56,-380.39,-2.08) max(396.95,379.25,24.10) size(795.50,759.64,26.18)
+extent 795.5 m, no scale
+vertices: 12373
+centroid xy: 30.10 35.57
+top z overall 24.10, within 150 m 24.10
+tol 1.5: 524 verts, clusters (n,x,y,z): [(262, 6.79, 11.47, 23.4), (262, 53.37, 53.18, 23.4)]
+crowns: [(6.79, 11.47, 23.4), (53.37, 53.18, 23.4)]
+candidates (deg, xext, yext): [(-41.84, 286.1, 168.7), (138.16, 286.1, 168.7)]
+extent tie, smaller rotation picked
+rotation -41.842 deg; translation (-43.973, -8.015, -4.096)
+crowns after: [(-31.262, -4.0, 19.3), (31.262, -4.0, 19.3)]
+crown 0 residual from (-29,-4,19.3): 2.262 m
+crown 1 residual from (29,-4,19.3): 2.262 m
+crown-to-crown distance 62.524 m (target 58)
+sublayer counts: building=110 site context=3
+final bbox: min(-416.58,-194.03,-6.17) max(327.52,178.76,20.00) size(744.09,372.79,26.18)
+deleted empty layer Layer0
+deleted empty layer Meshes
+deleted empty layer Layer 01
+FRAME layer: FRAME
+SaveAs result: True
+active doc after: C:\Users\bryan\Documents\Claude\ep3\rhino\CALACADEMY_SITE_2026_11_07C.3dm
+C size bytes: 43407424
+DONE

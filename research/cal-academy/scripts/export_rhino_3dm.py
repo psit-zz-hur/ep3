@@ -102,6 +102,54 @@ def manifest_matrix(e, meta):
     return M
 
 
+def add_drawings(model):
+    """DRAWINGS layer group: per RPBW sheet a textured 1:1 raster plane + traced vector polylines, from
+    data/cal-academy/drawings/DRAWINGS_REGISTRATION_*.json (made by drawings_register.py). (c) RPBW, reference only."""
+    reg_files = sorted((ROOT / 'data' / 'cal-academy' / 'drawings').glob('DRAWINGS_REGISTRATION_*.json'))
+    if not reg_files: print('no DRAWINGS registration json; skipping', file=sys.stderr); return
+    reg = json.load(open(reg_files[-1]))
+    L_root, id_root = layer(model, 'DRAWINGS', (90, 90, 90, 255))
+    for e in reg['sheets']:
+        if not e.get('placed'): continue
+        cls, sid = e['cls'], e['sheet']
+        unplaced = e['cls'] == 'detail'
+        tag = f"{cls} {sid}" + (' UNPLACED' if unplaced else '')
+        s = e['scale_m_per_px']; s = s if isinstance(s, (int, float)) else (s[0] if abs(s[0] - s[1]) < 1e-9 else f'{s[0]:.4f}x{s[1]:.4f}')
+        desc = f"{sid} | {cls} | {s if isinstance(s, str) else f'{s:.4f}'} m/px | {e['plane']} | conf {e['conf']} | {e['method']}"
+        # raster plane
+        li, _ = layer(model, tag, (60, 60, 60, 255), id_root)
+        png = e['raster_png']
+        mat = r3.Material(); mat.Name = f'DRAWING {sid}'
+        try: mat.SetBitmapTexture(png)
+        except Exception as ex: print('texture failed', sid, ex, file=sys.stderr)
+        midx = model.Materials.Add(mat)
+        bl, br, tr, tl = [r3.Point3d(*c) for c in e['corners_bl_br_tr_tl']]
+        mesh = r3.Mesh()
+        for p_ in (bl, br, tr, tl): mesh.Vertices.Add(p_.X, p_.Y, p_.Z)
+        mesh.Faces.AddFace(0, 1, 2, 3)
+        wv = np.array([br.X - bl.X, br.Y - bl.Y, br.Z - bl.Z]); hv = np.array([tl.X - bl.X, tl.Y - bl.Y, tl.Z - bl.Z])
+        w_, h_ = float(np.linalg.norm(wv)), float(np.linalg.norm(hv)); wv, hv = wv / w_, hv / h_
+        pln = r3.Plane(bl, r3.Vector3d(*wv), r3.Vector3d(*hv))
+        tm = r3.TextureMapping.CreatePlaneMapping(pln, r3.Interval(0, w_), r3.Interval(0, h_), r3.Interval(0, 1))
+        mesh.SetTextureCoordinates(tm, r3.Transform.Identity(), False)
+        mesh.Normals.ComputeNormals(); mesh.Compact()
+        at = attrs(li, f'{desc} | raster {png}')
+        at.MaterialIndex = midx; at.MaterialSource = r3.ObjectMaterialSource.MaterialFromObject
+        at.SetUserString('png', png); at.SetUserString('registration', desc); at.SetUserString('licence', 'RPBW / Fondazione Renzo Piano copyright, reference use only')
+        model.Objects.AddMesh(mesh, at)
+        # traced vectors
+        vf = e.get('vector_json')
+        if vf and pathlib.Path(vf).exists():
+            lv, _ = layer(model, f'{tag} vector', (80, 80, 80, 255) if e.get('vector') == 'traced' else (0, 0, 0, 255), id_root)
+            n = 0
+            for pts in json.load(open(vf))['polylines3d']:
+                if len(pts) < 2: continue
+                at2 = attrs(lv, f'{sid} TRACED {s if isinstance(s, str) else f"{s:.4f}"} m/px {e["plane"]}')
+                at2.ColorSource = r3.ObjectColorSource.ColorFromObject; at2.ObjectColor = (80, 80, 80, 255)
+                model.Objects.AddPolyline(r3.Polyline([r3.Point3d(*p_) for p_ in pts]), at2); n += 1
+            print('drawing', sid, 'raster + ', n, 'traced polylines', file=sys.stderr)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--pad', type=float, default=60); ap.add_argument('--coarse', type=int, default=4); ap.add_argument('--max-points', type=int, default=400000)
@@ -190,6 +238,8 @@ def main():
     nx, ny = meta['north_vec_xy']  # rotated-frame (x right, y up) vector; rhino y = that y
     model.Objects.AddLine(P(0, 0, 0), r3.Point3d(nx * 80, ny * 80, 0), attrs(L_frame, 'TRUE NORTH, 80 m'))
     dot((f"ORIGIN = main floor, building centre · UTM10N E {meta['centre_utm10n'][0]:.1f} N {meta['centre_utm10n'][1]:.1f} · NAVD88 {meta['ground_m']:.2f} m · frame rotated {meta['rotation_deg_applied']} deg", P(0, 0, 0)), attrs(L_frame, 'origin'))
+
+    add_drawings(model)
 
     out = pathlib.Path(a.out) if a.out else ROOT / 'rhino' / f"CALACADEMY_SITE_{datetime.date.today().strftime('%Y_%m_%d')}A.3dm"
     out.parent.mkdir(parents=True, exist_ok=True); ok = model.Write(str(out), 8)

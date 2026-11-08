@@ -60,11 +60,30 @@ missing when you read this, the agent had not finished; re-run the brief in `res
 - Tested with a synthetic splat of the lidar DSM (`scripts/lidar_to_splat_ply.py`, 189k gaussians, git-ignored):
   loads, registers at identity on top of the lidar mesh, warps into the little planet. Scaniverse scans not yet exported.
 - `scripts/ingest_captures.py` moves phone exports from Downloads into `captures/<space>/` and stages SPZs for the game.
-- `laptop-bootstrap.sh` run: see `data/cal-academy/` (PDAL clip skipped, PDAL not installed). Sketchfab fetch pending the token.
+- `laptop-bootstrap.sh` run: see `data/cal-academy/` (PDAL clip skipped, PDAL not installed). rockyweb throttles the LAZ tiles
+  to ~128 KB/s and truncated the first; the raw cloud for the site came from the S3 EPT instead (`scripts/lidar_ept_site.py`,
+  877 nodes -> `data/cal-academy/lidar2023/ept_site_game.ply`, 1.5 M pts in the game frame).
+- Sketchfab: all 16 props fetched with Bryan's token (CC BY x14, the NHM whale CC BY-NC-SA); they load in the halls; textures
+  are capped at 2k on load (`props.js`); `?props=0` skips them. `CALACADEMY_3D_ASSETS/` (git-ignored) holds every asset as one
+  file (GLB per prop via gltf-pipeline, splat PLYs, lidar mesh PLY, raw point cloud PLY, the Rhino files); `game/contact_sheet.html`
+  renders them all on one page.
+- ADMIN mode (` key): OrbitControls + WASD/QE fly, physics off; white LAYERS panel (`src/layers.js`) with every part on/off, each
+  splat on/off, PROPERTIES as sliders (render scale, raymarch steps, pause render (R), dome view/grid/tilt, flood map, camera
+  bookmarks, water, pool skin incl. fillet radius, the blob planet) and the registration of the selected scan. Dome view moved to C.
+- Pool skin mode 2 SKATEPARK (I cycles): troweled concrete with canary hatched routes (three laps) and stand-here discs; J uses it.
+- BLOB PLANET: one preset, mirrored so the roof sits on top (Shift+X flips). The other two presets are gone at Bryan's request.
+- Rhino: `scripts/export_rhino_3dm.py` -> `rhino/CALACADEMY_SITE_2026_11_07A.3dm` (mesh + massing + splats) and `..._B.3dm`
+  (+ POINTCLOUD layer from the EPT cloud). Frame: game frame Z-up, (x, y, z) = (X, -Z, Y), metres, origin = main floor centre.
+- Lidar DSM mesh exported (`scripts/export_lidar_mesh.py` -> `exports/`) and handed to THE VIEW [1] session by message.
+- Dataset census: `15-cal-academy-public-datasets.md` (cloud agent) and `15b-cal-academy-building-anchored-datasets.md`
+  (laptop session, live-tested). First picks for the demo: Ornithology window-strike birds on the facades; Philippine fishes by depth.
+- Status board: `scripts/build_board.py` -> `boards/CALACADEMY_BOARD_<date>A.png` (3840 x 2160) from `boards/img/` (stills by
+  `scripts/board_shots.py`, headless).
 
 ## 6. Open work, in order
 1. ~~Splat loader (Spark)~~ done; registration of the real scans to the lidar frame once they are exported.
-2. Skate physics against the SDF (port `map()` from poolskin.js to JS for the player collider; transitions, airs).
+2. Scaniverse scans: export from the phone (SPZ + PLY) -> `scripts/ingest_captures.py` -> register in the panel.
+3. Skate physics against the SDF (port `map()` from poolskin.js to JS for the player collider; transitions, airs).
 3. BIM-grade mezzanine, bridges and rainforest ramp from the Fondazione sections (drawing-336/328/279 PDFs).
 4. Fixed-step 4096x4096 domemaster frame capture for the 7thSense Delta; email planet@calacademy.org with a test frame.
 5. Water: port JONSWAP displacement + LEAN glitter from web-ocean into `water.js`.

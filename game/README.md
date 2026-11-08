@@ -20,7 +20,7 @@ Pool skin (O): I cycles tile / concrete / skatepark. The skatepark skin is trowe
 canary hatched bands as routes for skaters (three laps from the piazza) and crosshatched discs as places to stand, set in
 `src/poolskin.js` (ROUTES, ZONES); `?skin=skatepark`. J (Skateboard Saturdays) drains the building and uses it.
 
-ADMIN mode (` key, or `?admin=1`, sticky per browser): OrbitControls orbit / zoom / pan with the mouse, WASD + Q/E fly
+ADMIN mode (Tab key, or `?admin=1`, sticky per browser): OrbitControls orbit / zoom / pan with the mouse, WASD + Q/E fly
 through walls, Shift fast, physics and breathing off. The white LAYERS panel: every part of the model on/off, each splat
 scan on/off, PROPERTIES sliders (pool-skin fillet radius, tile line, tile size, water level, the blob planet's centre and
 radius), and the registration of the selected scan. V splats, X planet warp, Shift+X flips the planet.
