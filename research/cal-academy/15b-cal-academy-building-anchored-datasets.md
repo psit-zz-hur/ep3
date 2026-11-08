@@ -59,8 +59,8 @@ California alone: 463,198. Specimen images sit on Academy servers (`ibss-images.
 
 Spatial/temporal extent: global, with strong Pacific, Madagascar, Galápagos and Californian holdings; collecting years 1698-2026
 (GBIF `year` facet returns 197 distinct years among georeferenced records, 313 among all). The pre-1906 collection was largely lost in the
-earthquake and fire, so the year histogram has a **spike at 1905-06 (6,920 / 6,481 georeferenced records vs ~3,000 a year before)**: the Galápagos
-expedition's material was away at sea and survived (observation from the facet, not a published claim).
+earthquake and fire, so the year histogram steps up at 1905-06 (6,920 / 6,481 georeferenced records vs ~3,000 a year in 1900-04; it is a step, not a lone spike, because 1908-1911 run higher still). The Galápagos
+expedition's material was away at sea and survived (my reading of the facet, not a published claim).
 
 ## 2. Other aggregator and Academy-hosted collection portals
 
@@ -243,3 +243,17 @@ curl -s -G "https://api.gbif.org/v1/occurrence/search" \
 - **Server health:** `antweb.org` API and `monarch.calacademy.org` were down or blocked on 7 Nov; the GBIF route avoids both.
 - **Freshness:** counts above will have moved by the time of the build; re-run the facet calls and store them with a timestamp.
 - **Unverified leads:** Rixford 1906 earthquake digitisation (D37), AntWeb API (D19), a public "Collections Explorer" endpoint (D40), the Steinhart species table behind D50.
+
+---
+
+## Addendum (7 Nov 2026): 3D data, checked live
+
+| Source | What is there | Can we download? |
+|---|---|---|
+| Reefscape Genomics site https://reefscapegenomics.com | Lab pages (CoralScape, people, publications). No 3D files or repository links on the site. | No |
+| Sketchfab user `reefscape` (3 models found by search): https://sketchfab.com/3d-models/none-d9968b341cfa4818acabaf23203e33d3 (Great Detached Reef 40 m, ~92 M points), https://sketchfab.com/3d-models/none-0f33b972018b4269bc64b4b78a23f5b1 (Curaçao Director's Bay 60 m), https://sketchfab.com/3d-models/none-b8d3de7653fb43c8a4eb78d7186df0e0 (Curaçao Snake Bay 20 m) | Coral reef point clouds, CC BY, flagged downloadable | The download API answered 401 without a login. Needs a free Sketchfab account (not created). |
+| Zenodo 10.5281/zenodo.17465754 | Comparison of coral point clouds in OpenBrush, demo video, 13.9 MB, CC BY 4.0, Bongaerts et al. | Yes, direct |
+| Zenodo 10.5281/zenodo.14914807 (Galapagos_3D, not an Academy dataset) | 2.2 GB dataset.zip, 352 MB FinalPointClouds.zip, CC BY 4.0 | Yes, direct (large) |
+| MorphoSource API https://www.morphosource.org/api/media?q=California%20Academy%20of%20Sciences | 49 media by text search (33 CT stacks, 16 meshes); 46 `restricted_download`, 3 `open`: 000113661 (lizard skull CT), 000602395 (frog forelimb mesh), 000617919 (fish head CT, UF). Projects: GalapaGateway `000369223`, CAS Herpetology `00000C273`. | Needs a MorphoSource account; restricted items need the owner's approval. The GalapaGateway media count could not be isolated through the public API, so the "~1,300 target / ~900 done" figure stays unverified. |
+| Snapshot Cal Coast | iNaturalist photos and places; no 3D | No 3D exists; use separate coastal lidar |
+| Specimen image servers (ibss-images, researcharchive, antweb) | Refused or timed out from this machine on 7 Nov | Use GBIF media URLs from a different network |
