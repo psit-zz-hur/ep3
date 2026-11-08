@@ -94,3 +94,13 @@ missing when you read this, the agent had not finished; re-run the brief in `res
 - `poolskin.js` SDF has ~40 primitives; keep raymarch steps at 160, or lower `faceRes` in dome mode.
 - Commons/Wikipedia APIs rate-limit scripted fetches; pace them.
 - The environment "ep3 (architecture research)" holds the allowlist of hosts used; irrelevant on the laptop.
+
+## 5c. Threads open at 21:40 on 7 Nov (state, for whoever picks this up)
+- Reporting style Bryan set tonight: images with one-line captions, laconic; "OJOS" = newest screenshot in Documents\Claude\OJOS.
+- Snack 1, THE DIAGRAM with Cal Academy data: owner THE DIAGRAM [1] (Opus). Mockup served at http://localhost:8081/CALACADEMY_DIAGRAM_MOCKUP_2026_11_07A.html#A (launch config ep3-boards). Marks applied so far: paper panel removed; lanes to the page foot; dataset bands = records; pronounced; stretched; Sankey protocol (cumulative, accurate, no taper); aligned to the top, growing downward. Standing: the real build in the viewer with the same ADMIN UI and the GSD/RISD/RCA layer states.
+- Snack 2, the scans: 17 Scaniverse scans passed; merged asset "Cal Academy 1" (4 scans) generating since 20:12 on scaniverse.nianticspatial.com (org bc148916, site a6e4d9a9); download approved when done; the savannah diorama = two scans still to be named by Bryan for a second "Generate assets" (30 credits/s, balance 112,790).
+- Snack 3 (candidate), Golden Gate Planet: THE TERRITORY [1] (Opus), viewer 127.0.0.1:8803/?ggp=v0|v1|v2|v3. v0 and v3 baked; v2 waits on the CW DTM; v1 on the whole-park 1 m DSM. Rulings in research/cal-academy/19 and 20 (clock 30x with transit on; dunes + grasses + elk; bus morphs outside the park; whales/pelicans in v3; v3 sea at 7.36 m with web-ocean glint).
+- Game: ocean.js (FFT flood) landed, untested on the Arc; ADMIN panel v3; ?water=simple falls back.
+- Rhino: skp_register_v3.py and drawings_pictures_v1.py wait for Bryan's RunPythonScript (no RhinoCode bridge in his Rhino).
+- Agents still running in the Freeswim session: whole-park rasters + GTFS (incl. CW DTM, park masks, core DTM); PhyloPic sprites v2.
+- Fable sessions at 21:35: this one, PROVOCATIONS [1], JOB [1]; the rest Opus or Sonnet.
