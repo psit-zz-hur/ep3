@@ -12,6 +12,7 @@ import { buildPlaques } from './plaques.js';
 import { buildDiscovery } from './discovery.js';
 import { loadWarehouseModel } from './model.js';
 import { loadProps, makeFlythrough, PROPS } from './props.js';
+import { buildPoolSkin } from './poolskin.js';
 
 const canvas = document.getElementById('c');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer: true });
@@ -28,7 +29,7 @@ const fill = new THREE.PointLight(0x7fd0ff, 0.6, 120, 1.5); fill.position.set(0,
 const sky = new THREE.Mesh(new THREE.SphereGeometry(1200, 24, 12), new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, uniforms: {}, vertexShader: 'varying vec3 vP; void main(){ vP=position; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);} ', fragmentShader: 'varying vec3 vP; void main(){ float h = normalize(vP).y; vec3 c = mix(vec3(0.10,0.07,0.12), vec3(0.02,0.03,0.07), clamp(h*2.0,0.0,1.0)); c = mix(vec3(0.45,0.22,0.18), c, clamp(h*6.0+0.2,0.0,1.0)); gl_FragColor=vec4(c,1.0);} ' })); scene.add(sky);
 
 const hud = document.getElementById('hud'), help = document.getElementById('help'), clickEl = document.getElementById('click');
-help.textContent = `K fly through the nearest exhibit scan · WASD swim/walk · mouse look · Space up · Shift down · E sprint / ride lift up · Q lift down
+help.textContent = `O skin on/off · I tile/concrete · J Skateboard Saturdays · [ ] skin line · - = fillet radius (6 in) · , . tile size · K fly through the nearest exhibit scan · WASD swim/walk · mouse look · Space up · Shift down · E sprint / ride lift up · Q lift down
 F flood / drain · 1 2 3 water presets · D dome view · G registration grid · T tilt ± · P save 4K domemaster
 M flood-zone map · N lidar grid · H hide help`;
 
@@ -38,6 +39,15 @@ const water = buildWater(scene);
 const fish = await buildFish(scene);
 const player = buildPlayer(camera, renderer.domElement, site);
 const dome = buildDome(renderer, scene, camera, { faceRes: 1024, outRes: 2048 });
+const pool = buildPoolSkin(scene, camera);
+let skate = false;
+function setSkate(on) {
+  // Skateboard Saturdays: drained, smooth concrete sock to the ceiling, mushroom columns, whale lowered to the floor as a rib-cage arch
+  skate = on; player.state.skate = on; pool.state.enabled = true; pool.setMode(on ? 1 : 0); pool.setTileTop(on ? L.levels.roofSlab + 1.0 : L.levels.roofSlab - 0.3);
+  water.setTarget(on ? L.levels.aquarium - 0.2 : water.state.target);
+  const whale = scene.getObjectByName('whale-procedural'); if (whale) whale.position.y = on ? 1.9 : L.whale.y;
+  document.getElementById('title').textContent = on ? 'SKATEBOARD SATURDAYS · CAL ACADEMY · DESIGN FICTION' : 'FREESWIM FRIDAYS · CAL ACADEMY · DESIGN FICTION';
+}
 const map = buildMap();
 const diver = buildDiver(scene, camera);
 const plaques = buildPlaques(scene);
@@ -61,6 +71,15 @@ addEventListener('keydown', (e) => {
   if (e.code === 'KeyM') map.toggle();
   if (e.code === 'KeyN') { gridOn = !gridOn; site.setGrid(gridOn ? 0.35 : 0); }
   if (e.code === 'KeyK') { if (fly.active) fly.stop(); else { let best = null, bd = 1e9; for (const p of loadedProps) { const d = p.box.getCenter(new THREE.Vector3()).distanceTo(camera.position); if (d < bd) { bd = d; best = p; } } fly.start(best); } }
+  if (e.code === 'KeyO') { pool.state.enabled = !pool.state.enabled; }
+  if (e.code === 'KeyI') { pool.setMode(pool.mode > 0.5 ? 0 : 1); }
+  if (e.code === 'KeyJ') setSkate(!skate);
+  if (e.code === 'BracketRight') pool.setTileTop(Math.min(pool.tileTop + 0.5, L.levels.roofSlab + 0.2));
+  if (e.code === 'BracketLeft') pool.setTileTop(Math.max(pool.tileTop - 0.5, L.levels.aquarium));
+  if (e.code === 'Equal') pool.setFillet(pool.fillet + 0.1524);       // + 6 in
+  if (e.code === 'Minus') pool.setFillet(pool.fillet - 0.1524);       // - 6 in
+  if (e.code === 'Period') pool.setTileSize(pool.tileSize * 1.25);
+  if (e.code === 'Comma') pool.setTileSize(pool.tileSize / 1.25);
   if (e.code === 'KeyH') { showHelp = !showHelp; help.style.display = showHelp ? '' : 'none'; }
 });
 // URL params for headless tests: ?water=9&pos=x,y,z&look=x,y,z&dome=1&grid=1&map=1
@@ -73,6 +92,13 @@ if (q.get('grid') === '1') dome.state.gridMix = 0.85;
 if (q.get('map') === '1') map.toggle();
 if (q.has('tilt')) dome.state.tiltDeg = parseFloat(q.get('tilt'));
 if (q.get('model') === '1') loadWarehouseModel(scene);
+if (q.get('pool') === '1') pool.state.enabled = true;
+if (q.get('skate') === '1') setSkate(true);
+if (q.get('skin') === 'concrete') pool.setMode(1);
+if (q.get('pooldebug') === '1') pool.uniforms.uDebug.value = 1;
+if (q.has('tiletop')) pool.setTileTop(parseFloat(q.get('tiletop')));
+if (q.has('fillet')) pool.setFillet(parseFloat(q.get('fillet')));
+if (q.has('tile')) pool.setTileSize(parseFloat(q.get('tile')));
 const loadedProps = await loadProps(scene, (p) => console.log('prop', p.name));
 const fly = makeFlythrough(camera);
 if (q.get('nohud') === '1') { hud.style.display = 'none'; help.style.display = 'none'; clickEl.style.display = 'none'; document.getElementById('title').style.display = 'none'; }
@@ -96,14 +122,15 @@ function frame() {
   const al = ps.airlock; interior.doors.outer.visible = !(ps.zone === 'airlock' && al.phase === 'idle'); interior.doors.inner.visible = al.phase !== 'dry';
   // dive porthole markers pulse
   interior.markers.forEach((m, i) => m.scale.setScalar(1 + 0.08 * Math.sin(t * 2 + i)));
+  pool.update(t, water.state.level, scene.fog, env.wet ? env.layer.light : 1.0);
   if (dome.state.enabled) dome.render(); else renderer.render(scene, camera);
   acc += dt; if (acc > 0.1) {
     acc = 0; const p = camera.position; const lay = env.wet ? env.layer.name : (ps.zone ? `DRY · ${ps.zone}${ps.zone === 'airlock' ? ' · ' + al.phase : ''}` : 'AIR · ' + (p.y > L.levels.roofSlab ? 'roof' : 'inside'));
     const near = fish.nearby(p, 12); const nearTxt = Object.entries(near).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([n, c]) => `${c} ${n}`).join(' · ');
-    hud.textContent = `water ${water.state.level.toFixed(1)} m  depth ${env.wet ? (water.state.level - p.y).toFixed(1) : '0.0'} m\n${lay}\nxyz ${p.x.toFixed(0)} ${p.y.toFixed(1)} ${p.z.toFixed(0)}${dome.state.enabled ? `\nDOME 180° · tilt ${dome.state.tiltDeg}° · grid ${dome.state.gridMix ? 'on' : 'off'}` : ''}${nearTxt ? '\n' + nearTxt : ''}`;
+    hud.textContent = `water ${water.state.level.toFixed(1)} m  depth ${env.wet ? (water.state.level - p.y).toFixed(1) : '0.0'} m\n${lay}\nxyz ${p.x.toFixed(0)} ${p.y.toFixed(1)} ${p.z.toFixed(0)}${pool.state.enabled ? `\n${pool.mode > 0.5 ? 'CONCRETE SOCK' : 'TILE SOCK'} · line ${pool.tileTop.toFixed(1)} m · fillet ${(pool.fillet / 0.3048).toFixed(1)} ft · tile ${(pool.tileSize * 100).toFixed(0)} cm` : ''}${dome.state.enabled ? `\nDOME 180° · tilt ${dome.state.tiltDeg}° · grid ${dome.state.gridMix ? 'on' : 'off'}` : ''}${nearTxt ? '\n' + nearTxt : ''}`;
     if (map.visible()) map.draw(p, water.state.level);
   }
   requestAnimationFrame(frame);
 }
 frame();
-window.__fs = { scene, camera, water, dome, player, fish, L };
+window.__fs = { scene, camera, water, dome, player, fish, L, pool, renderer };

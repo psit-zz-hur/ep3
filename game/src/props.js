@@ -8,7 +8,7 @@ import { L } from './layout.js';
 
 export const PROPS = [
   // The Academy's blue whale (about 26 m) hangs over Giants of Land and Sea, south-west of the piazza under the roof slab.
-  { file: 'blue_whale_skeleton_nhm.glb', name: 'Blue whale skeleton (stand-in: NHM London scan)', pos: [40, 6.5, -20], fit: [26, 4, 8], hang: true },
+  { file: 'blue_whale_skeleton_nhm.glb', name: 'Blue whale skeleton (stand-in: NHM London scan)', pos: [L.whale.x, L.whale.y, L.whale.z], fit: [26, 4, 8], hang: true, replaces: 'whale-procedural' },
   { file: 'orca_skeleton.glb', name: 'Orca O319 skeleton (placeholder)', pos: [55, 6, -5], fit: [7, 1.6, 2.2], hang: true },
   { file: 'philippine_reef_photogrammetry.glb', name: 'Philippine Coral Reef (Viz Studio photogrammetry)', pos: [L.reefTank.x, L.reefTank.bottom, L.reefTank.z], fit: [L.reefTank.w - 1, 7, L.reefTank.d - 1], replaces: 'procedural-coral' },
   { file: 'reef_buddha_wall.glb', name: 'Philippine Reef buddha wall', pos: [L.reefTank.x, L.reefTank.bottom, L.reefTank.z - L.reefTank.d / 2 + 1], fit: [L.reefTank.w - 1, 6, 2] },
@@ -41,6 +41,7 @@ export async function loadProps(scene, onLoaded) {
       const s = Math.min(p.fit[0] / size.x, p.fit[1] / size.y, p.fit[2] / size.z);
       root.scale.setScalar(s); root.position.set(p.pos[0] - c.x * s, p.hang ? p.pos[1] - c.y * s : p.pos[1] - box.min.y * s, p.pos[2] - c.z * s);
       if (p.hang) { const sz2 = size.clone().multiplyScalar(s); if (sz2.x < sz2.z) root.rotation.y = Math.PI / 2; }
+      if (p.replaces) { const old = scene.getObjectByName(p.replaces); if (old) old.visible = false; }
       root.name = 'prop:' + p.file; scene.add(root); p.root = root; p.box = new THREE.Box3().setFromObject(root); loaded.push(p); if (onLoaded) onLoaded(p, root);
     } catch (e) { console.warn('prop failed', p.file, e); }
   }

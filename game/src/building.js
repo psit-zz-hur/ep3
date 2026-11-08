@@ -140,14 +140,24 @@ export function buildInterior(scene) {
   for (let z = ah.z0 + 6; z < ah.z1 - 4; z += 8) { box(3, 4, 6, M.warm, ah.x0 + 1.5, 2.2, z, g); box(3, 4, 6, M.warm, ah.x1 - 1.5, 2.2, z, g); }
   // Penguins (sealed): glass block at the south end
   const pg = L.penguins; box(pg.x1 - pg.x0, 6, pg.z1 - pg.z0, M.sealed, (pg.x0 + pg.x1) / 2, 3, (pg.z0 + pg.z1) / 2, g);
-  // Research wing (sealed, south side)
-  const rw = L.researchWing; box(rw.x1 - rw.x0, rs, rw.z1 - rw.z0, M.sealed, (rw.x0 + rw.x1) / 2, rs / 2, (rw.z0 + rw.z1) / 2, g);
+  // Research / collections / public labs (sealed) at the two north corners; store (sealed) south centre
+  for (const rw of [L.researchWing, L.researchWing2, L.shop]) box(rw.x1 - rw.x0, rs, rw.z1 - rw.z0, M.sealed, (rw.x0 + rw.x1) / 2, rs / 2, (rw.z0 + rw.z1) / 2, g);
+  // Blue whale skeleton, procedural stand-in (26 m), hanging over the east exhibit floor; replaced by the NHM scan when assets/props has it
+  const wh = L.whale; const bone = new THREE.MeshStandardMaterial({ color: 0xe9e2cf, roughness: 0.7 });
+  const whale = new THREE.Group(); whale.name = 'whale-procedural';
+  const skull = new THREE.Mesh(new THREE.ConeGeometry(1.2, 6.5, 12), bone); skull.rotation.z = -Math.PI / 2; skull.scale.set(1, 1, 0.55); skull.position.set(wh.length * 0.5 - 3.2, 0.2, 0); whale.add(skull);
+  for (const sgn of [-1, 1]) { const jaw = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.2, 6.2, 8), bone); jaw.rotation.z = Math.PI / 2; jaw.rotation.y = sgn * 0.12; jaw.position.set(wh.length * 0.5 - 3.2, -0.9, sgn * 0.6); whale.add(jaw); }
+  const nV = 60; for (let i = 0; i < nV; i++) { const t = i / nV; const r = 0.34 * (1 - t * 0.75) + 0.05; const v = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.3, 10), bone); v.rotation.z = Math.PI / 2; v.position.set(wh.length * 0.5 - 6.5 - t * (wh.length - 6.5), Math.sin(t * Math.PI) * 0.6 - 0.1, 0); whale.add(v);
+    if (i > 2 && i < 18) { for (const sgn of [-1, 1]) { const rib = new THREE.Mesh(new THREE.TorusGeometry(1.6 - (i - 10) * (i - 10) * 0.006, 0.05, 6, 18, Math.PI * 0.95), bone); rib.position.copy(v.position); rib.position.y -= 0.1; rib.rotation.y = Math.PI / 2; rib.rotation.z = sgn > 0 ? Math.PI : 0; rib.rotation.x = sgn * 0.35; whale.add(rib); } }
+    if (i > 15 && i < 40) { const chev = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.6 * (1 - t), 5), bone); chev.position.copy(v.position); chev.position.y -= 0.45 * (1 - t) + r; chev.rotation.x = Math.PI; whale.add(chev); } }
+  for (const sgn of [-1, 1]) { const flip = new THREE.Group(); for (let k = 0; k < 4; k++) { const ph = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.05, 2.6, 6), bone); ph.position.set(-k * 0.35 - 0.2, -1.3, sgn * (1.6 + k * 0.12)); ph.rotation.z = 0.25; ph.rotation.x = sgn * 0.6; flip.add(ph); } flip.position.set(wh.length * 0.5 - 9, -0.6, 0); whale.add(flip); }
+  for (const dx of [8, 0, -8]) { const c = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, rs - wh.y - 0.5, 4), M.steel); c.position.set(dx, (rs - wh.y) / 2 + 0.2, 0); whale.add(c); }
+  whale.position.set(wh.x, wh.y, wh.z); g.add(whale);
   // Café (dry) and Terrace (dry, outside the shell)
   const cf = L.cafe; const cfm = box(cf.x1 - cf.x0, rs - 0.6, cf.z1 - cf.z0, new THREE.MeshStandardMaterial({ color: 0xe9dcc2, roughness: 0.9, transparent: true, opacity: 0.55 }), (cf.x0 + cf.x1) / 2, (rs - 0.6) / 2, (cf.z0 + cf.z1) / 2, g);
   for (let i = 0; i < 14; i++) box(1.2, 0.75, 1.2, M.warm, cf.x0 + 4 + (i % 5) * 5, 0.4, cf.z0 + 5 + Math.floor(i / 5) * 8, g);
-  const te = L.terrace; box(te.x1 - te.x0, 0.3, te.z1 - te.z0, M.warm, (te.x0 + te.x1) / 2, 0.15, (te.z0 + te.z1) / 2, g);
-  box(te.x1 - te.x0 + 2, 0.3, te.z1 - te.z0 + 2, M.steel, (te.x0 + te.x1) / 2, 5.5, (te.z0 + te.z1) / 2, g);
-  for (const [x, z] of [[te.x0 + 1, te.z0 + 1], [te.x1 - 1, te.z0 + 1], [te.x0 + 1, te.z1 - 1], [te.x1 - 1, te.z1 - 1]]) box(0.3, 5.2, 0.3, M.steel, x, 2.75, z, g);
+  const te = L.terrace; box(te.x1 - te.x0, rs - 0.6, te.z1 - te.z0, new THREE.MeshStandardMaterial({ color: 0xe9dcc2, roughness: 0.9, transparent: true, opacity: 0.55 }), (te.x0 + te.x1) / 2, (rs - 0.6) / 2, (te.z0 + te.z1) / 2, g);
+  for (let i = 0; i < 12; i++) box(1.2, 0.75, 1.2, M.warm, te.x0 + 4 + (i % 4) * 7, 0.4, te.z0 + 4 + Math.floor(i / 4) * 7, g);
   // Doors from outside: café west door, terrace east door
   const door = (p, y) => { const m = new THREE.Mesh(new THREE.BoxGeometry(1.2, 2.6, 0.2), doorMat); m.position.set(p.x, y + 1.3, p.z); m.rotation.y = Math.PI / 2; g.add(m); };
   door(cf.door, 0); door(te.door, 0);
@@ -155,7 +165,7 @@ export function buildInterior(scene) {
   // Exterior dry routes to the roof: lift tower by The Terrace, stair by the café terrace
   const lt = L.liftTower; const tower = new THREE.Mesh(new THREE.CylinderGeometry(lt.r, lt.r, lt.y1 - lt.y0 + 3, 24, 1, true), new THREE.MeshStandardMaterial({ color: 0xffd34d, roughness: 0.5, transparent: true, opacity: 0.35, side: THREE.DoubleSide })); tower.position.set(lt.x, (lt.y0 + lt.y1 + 3) / 2, lt.z); g.add(tower);
   const cab = new THREE.Mesh(new THREE.CylinderGeometry(lt.r - 0.4, lt.r - 0.4, 0.3, 24), M.steel); cab.position.set(lt.x, 0.15, lt.z); g.add(cab);
-  const bridge = box(8, 0.3, 3, M.steel, lt.x + 4 + 2, lt.y1 + 0.1, lt.z, g); // bridge from the tower top to the roof edge
+  const bridge = box(8, 0.3, 3, M.steel, lt.x + 6, lt.y1 + 0.1, lt.z, g); // bridge from the tower top to the roof edge
   const ws = L.westStair; for (let i = 0; i < 16; i++) box(ws.w, 0.25, ws.d / 16, M.steel, ws.x, (i + 0.5) * (ws.y1 / 16), ws.z - ws.d / 2 + (i + 0.5) * ws.d / 16, g);
   box(3, 0.3, 4, M.steel, ws.x - 2, ws.y1 + 0.1, ws.z + ws.d / 2, g);
   // T. rex in the entrance hall (north side), the pendulum: simple landmarks

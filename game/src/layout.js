@@ -15,15 +15,21 @@ export const L = {
   calCoast: { x: 30, z: -38, w: 18, d: 8, top: -1.0, bottom: -7.6, name: 'California Coast (cold)' },
   swamp:    { x: 14, z: 28, r: 6, top: 0, bottom: -7.6, name: 'The Swamp (sealed)' },
   amazon:   { x: -29, z: 4, r: 11, top: -1.0, bottom: -7.6, name: 'Amazon Flooded Forest (sealed)' },
-  africanHall: { x0: 56, x1: 84, z0: -54, z1: 18, vaultTop: 9.2, name: 'African Hall' },
-  penguins: { x0: 56, x1: 84, z0: -54, z1: -42, name: 'Penguins (sealed)' },
-  cafe:     { x0: 56, x1: 84, z0: 24, z1: 55, name: 'Academy Café (dry)', door: { x: 84.5, z: 40 } },
-  terrace:  { x0: -104, x1: -86, z0: -12, z1: 12, name: 'The Terrace (dry)', door: { x: -104, z: 0 } },
+  africanHall: { x0: 50, x1: 84, z0: -54, z1: -20, vaultTop: 9.2, name: 'African Hall (SW)' },
+  penguins: { x0: 72, x1: 84, z0: -54, z1: -40, name: 'Penguins (sealed)' },
+  cafe:     { x0: 56, x1: 84, z0: 10, z1: 36, name: 'Academy Café (dry)', door: { x: 84.5, z: 24 } },
+  terrace:  { x0: -84, x1: -50, z0: -54.5, z1: -30, name: 'The Terrace + auditorium (dry)', door: { x: -67, z: -54.5 } },
   airlock:  { x0: -17, x1: -11, z0: 0, z1: 8, y0: 0, y1: 3.2, name: 'Rainforest airlock', outer: { x: -11, z: 4 }, inner: { x: -17, z: 4 } },
-  researchWing: { x0: -84, x1: 56, z0: -54.5, z1: -42, name: 'Research / collections / admin (sealed)' },
+  researchWing: { x0: -84.5, x1: -40, z0: 36, z1: 55.5, name: 'Research / collections / public lab, NE (sealed)' },
+  researchWing2: { x0: 40, x1: 84.5, z0: 36, z1: 55.5, name: 'Research / collections / public lab, NW (sealed)' },
+  exhibitEast: { x0: -84.5, x1: -44, z0: -30, z1: 36, name: 'East exhibit floor (Giants of Land and Sea; blue whale overhead)' },
+  exhibitWest: { x0: 44, x1: 84.5, z0: -20, z1: 36, name: 'West exhibit floor' },
+  auditorium: { x0: -84.5, x1: -50, z0: -54.5, z1: -30, name: 'Auditorium / The Terrace restaurant, SE (dry)' },
+  shop: { x0: -20, x1: 20, z0: -54.5, z1: -44, name: 'Store (sealed)' },
+  whale: { x: -64, y: 6.4, z: 6, length: 26, name: 'Blue whale skeleton' },
   lss: { x0: -84, x1: 84, z0: -54.5, z1: 55.5, y0: -12.5, y1: -7.6, name: 'Life-support + mechanical B2 (sealed)' },
-  liftTower: { x: -92, z: 16, r: 2.6, y0: 0, y1: 11.45, name: 'Dive Tower (exterior lift, Terrace to roof)' },
-  westStair: { x: 88, z: 40, w: 3, d: 8, y0: 0, y1: 11.45, name: 'Exterior stair (café terrace to roof)' },
+  liftTower: { x: -92, z: -40, r: 2.6, y0: 0, y1: 11.45, name: 'Dive Tower (exterior lift, Terrace to roof)' },
+  westStair: { x: 88, z: 24, w: 3, d: 8, y0: 0, y1: 11.45, name: 'Exterior stair (café terrace to roof)' },
   hatches: [
     { name: 'Planetarium porthole (dive entry)', x: 29, y: 19.3, z: 4, r: 2.4, into: 'planetarium', wet: true },
     { name: 'Rainforest hatch (airlock, dry)', x: -29, y: 19.3, z: 4, r: 2.4, into: 'rainforest', wet: false },
@@ -40,22 +46,25 @@ export const L = {
     { name: 'Piazza + main-floor circulation', kind: 'flood', x0: -56, x1: 56, z0: -42, z1: 55.5 },
     { name: 'Steinhart Aquarium level', kind: 'flood', x0: -84, x1: 56, z0: -42, z1: 55.5, level: 'aquarium' },
     { name: 'Morrison Planetarium', kind: 'flood', circle: { x: 29, z: 4, r: 13.7 } },
-    { name: 'African Hall', kind: 'flood', x0: 56, x1: 84, z0: -42, z1: 18 },
+    { name: 'African Hall', kind: 'flood', x0: 50, x1: 84, z0: -54, z1: -20 },
     { name: 'Philippine Coral Reef (glass retracted)', kind: 'flood', x0: -59, x1: -45, z0: -33, z1: -23 },
     { name: 'Reef Lagoon (glass retracted)', kind: 'flood', x0: -19, x1: 3, z0: -34.5, z1: -25.5 },
     { name: 'Osher Rainforest', kind: 'dry', circle: { x: -29, z: 4, r: 13.7 } },
     { name: 'Rainforest airlock', kind: 'airlock', x0: -17, x1: -11, z0: 0, z1: 8 },
-    { name: 'Academy Café', kind: 'dry', x0: 56, x1: 84, z0: 24, z1: 55 },
-    { name: 'The Terrace', kind: 'dry', x0: -104, x1: -86, z0: -12, z1: 12 },
-    { name: 'Dive Tower lift (exterior)', kind: 'route', circle: { x: -92, z: 16, r: 2.6 } },
-    { name: 'Exterior stair at café', kind: 'route', x0: 86.5, x1: 89.5, z0: 36, z1: 44 },
+    { name: 'Academy Café', kind: 'dry', x0: 56, x1: 84, z0: 10, z1: 36 },
+    { name: 'Auditorium + The Terrace', kind: 'dry', x0: -84.5, x1: -50, z0: -54.5, z1: -30 },
+    { name: 'Dive Tower lift (exterior, by the Terrace)', kind: 'route', circle: { x: -92, z: -40, r: 2.6 } },
+    { name: 'Exterior stair at café', kind: 'route', x0: 86.5, x1: 89.5, z0: 20, z1: 28 },
     { name: 'Roof deck (dry, public)', kind: 'route', x0: -84.5, x1: 84.5, z0: -54.5, z1: 55.5, level: 'roof' },
-    { name: 'Penguins', kind: 'sealed', x0: 56, x1: 84, z0: -54, z1: -42 },
+    { name: 'Penguins', kind: 'sealed', x0: 72, x1: 84, z0: -54, z1: -40 },
     { name: 'The Swamp (alligator)', kind: 'sealed', circle: { x: 14, z: 28, r: 6 } },
     { name: 'Amazon tank (freshwater, under dome)', kind: 'sealed', circle: { x: -29, z: 4, r: 11 }, level: 'aquarium' },
     { name: 'California Coast (cold)', kind: 'sealed', x0: 21, x1: 39, z0: -42, z1: -34 },
-    { name: 'Research / collections / admin / Project Lab', kind: 'sealed', x0: -84, x1: 56, z0: -54.5, z1: -42 },
-    { name: 'Store / restrooms / theatres / stairs above L0', kind: 'sealed', x0: 56, x1: 84, z0: 18, z1: 24 },
+    { name: 'Research / collections / public lab (NE)', kind: 'sealed', x0: -84.5, x1: -40, z0: 36, z1: 55.5 },
+    { name: 'Research / collections / public lab (NW)', kind: 'sealed', x0: 40, x1: 84.5, z0: 36, z1: 55.5 },
+    { name: 'Store', kind: 'sealed', x0: -20, x1: 20, z0: -54.5, z1: -44 },
+    { name: 'East exhibit floor + blue whale', kind: 'flood', x0: -84.5, x1: -44, z0: -30, z1: 36 },
+    { name: 'West exhibit floor', kind: 'flood', x0: 44, x1: 84.5, z0: -20, z1: 36 },
   ],
 };
 export function insideFootprint(x, z, pad = 0) {
@@ -79,8 +88,10 @@ export function dryZone(x, y, z) {
 }
 // Solid volumes the player cannot enter (sealed rooms), as a pushout vector or null.
 export function sealedPush(x, y, z) {
-  if (inBox(L.penguins, x, y, z, -8, 10)) return { x: 0, z: L.penguins.z1 + 0.5 - z };
-  if (inBox(L.researchWing, x, y, z, -8, 10)) return { x: 0, z: L.researchWing.z1 + 0.5 - z };
+  if (inBox(L.penguins, x, y, z, -8, 10)) return { x: L.penguins.x0 - 0.5 - x, z: 0 };
+  if (inBox(L.researchWing, x, y, z, -8, 10)) return { x: 0, z: L.researchWing.z0 - 0.5 - z };
+  if (inBox(L.researchWing2, x, y, z, -8, 10)) return { x: 0, z: L.researchWing2.z0 - 0.5 - z };
+  if (inBox(L.shop, x, y, z, -8, 10)) return { x: 0, z: L.shop.z1 + 0.5 - z };
   if (inBox(L.calCoast, x, y, z, -8, -1)) return { y: -1 + 0.4 - y };
   const sw = (x - L.swamp.x) ** 2 + (z - L.swamp.z) ** 2;
   if (sw < L.swamp.r ** 2 && y < 0.2) return { y: 0.2 - y };

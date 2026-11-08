@@ -7,7 +7,7 @@ export function buildPlayer(camera, dom, site) {
   const controls = new PointerLockControls(camera, dom);
   const keys = {}; window.addEventListener('keydown', (e) => keys[e.code] = true); window.addEventListener('keyup', (e) => keys[e.code] = false);
   const vel = new THREE.Vector3(); const pos = camera.position; const fwd = new THREE.Vector3(), right = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
-  const state = { mode: 'air', zone: null, grounded: false, airlock: { t: 0, phase: 'idle' } };
+  const state = { mode: 'air', zone: null, grounded: false, airlock: { t: 0, phase: 'idle' }, skate: false };
   pos.set(29, L.levels.crown + 1.7, 4 + 14); camera.lookAt(0, 12, 3);
 
   function floorAt(x, y, z) {
@@ -39,7 +39,7 @@ export function buildPlayer(camera, dom, site) {
       vel.y += Math.sin(performance.now() * 0.001) * 0.02; // gentle swell
     } else {
       move.y = 0; if (move.lengthSq() > 0) move.normalize();
-      const sp = keys.KeyE ? 6 : 3.0; vel.x = THREE.MathUtils.lerp(vel.x, move.x * sp, 1 - Math.exp(-dt * 8)); vel.z = THREE.MathUtils.lerp(vel.z, move.z * sp, 1 - Math.exp(-dt * 8));
+      const skate = state.skate; const sp = skate ? (keys.KeyE ? 11 : 7.5) : (keys.KeyE ? 6 : 3.0); const resp = skate ? 1.2 : 8; vel.x = THREE.MathUtils.lerp(vel.x, move.x * sp, 1 - Math.exp(-dt * resp)); vel.z = THREE.MathUtils.lerp(vel.z, move.z * sp, 1 - Math.exp(-dt * resp));
       vel.y -= 9.8 * dt; if (keys.Space && state.grounded) vel.y = 4.5;
     }
     pos.addScaledVector(vel, dt);
