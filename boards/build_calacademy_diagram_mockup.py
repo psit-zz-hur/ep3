@@ -146,7 +146,7 @@ def counts_per_year(y):
 def shape(y, s, e):
     """placeholder records-per-year shape: next to nothing before 1905, the 1905-06 Galapagos jump, the climb to today."""
     if y < s or y > e: return 0.0
-    if y < 1905: return 0.06
+    if y < 1905: return 0.12
     if y <= 1906: return 0.7
     if y < 1946: return 0.3
     return 0.35 + 0.65 * min(1, (y - 1946) / 70) ** 1.6
@@ -166,6 +166,26 @@ def thick(y, total, s, e):
     if y < s or y > e: return 0
     b = 0.25 if y < 1905 else (0.75 if y <= 1906 else 0.38 if y < 1946 else 0.55 + 0.45 * min(1, (y - 1946) / 70))
     return b * (1.2 + 7.0 * math.log10(total) / math.log10(1909776))
+
+
+SHORT = {'BOTANY (BOT)': 'BOTANY', 'ANTWEB': 'ANTWEB', 'ENTOMOLOGY (ENT)': 'ENTOMOLOGY', 'HERPETOLOGY (HERP)': 'HERPETOLOGY',
+         'INVERTEBRATE ZOOLOGY (IZ)': 'INVERTEBRATE ZOOLOGY', 'ICHTHYOLOGY (ICH)': 'ICHTHYOLOGY', 'ORNITHOLOGY (ORN)': 'ORNITHOLOGY',
+         'MAMMALOGY (MAM)': 'MAMMALOGY', 'GEOLOGY (GEO)': 'GEOLOGY', 'ENTOMOLOGY TYPE (TYPE)': 'ENTOMOLOGY TYPE',
+         'ORNITHOLOGY EGG AND NEST (EGG)': 'EGG AND NEST', 'GEOLOGY MICROFOSSIL': 'MICROFOSSIL'}
+
+
+def sk_flows(B):
+    """the Sankey flows: (label, total, records-per-year function, first year)."""
+    if B:
+        gal = {1905: 2400, 1906: 2168}
+        return [('GALAPAGOS 1905–06', 4568, lambda v: gal.get(v, 0), 1905),
+                ('THE BUILDING · WINDOW-STRIKE BIRDS', 692, lambda v: BUILDING_BIRDS.get(v, 0), 2008)]
+    return [(SHORT[lab], n, (lambda v, n=n, s=s, e=e: rate(v, n, s, e)), s) for lab, n, s, e, run in DATASETS]
+
+
+def sk_so_far(B):
+    """specimens so far under the hand at 2026: every flow, less what burned in 1906."""
+    return int(round(sum(n - sum(rf(v) for v in range(s, 1905)) for _, n, rf, s in sk_flows(B))))
 
 
 def build(frame):
@@ -253,11 +273,11 @@ def build(frame):
     A('</g>')
 
     # ---------------- the chart: lanes and the records strip (the paper cut by Bryan, 11/07 21:19) ----------------
-    X0, X1 = 1110, 1800
+    X0, X1 = 1110, 1700
     X = lambda y: X0 + (y - 1850) * (X1 - X0) / 180
     A('<g id="chart">')
     # numerals (the chart's own, part of the drawing)
-    so_far = 4568 + nb if B else 4210000
+    so_far = sk_so_far(B)
     A('<text class="nl" x="%d" y="96">YEAR</text><text class="nb" x="%d" y="146">%d</text>' % (X0, X0, YEAR))
     A('<text class="nl" x="%d" y="96">SPECIMENS SO FAR</text><text class="nb" x="%d" y="146">%s</text>' % (X0 + 170, X0 + 170, format(so_far, ',')))
     A('<text class="nl r" x="%d" y="96">CALIFORNIA ACADEMY OF SCIENCES</text><text class="ns" x="%d" y="114">GOLDEN GATE PARK · 37.76986 N 122.46609 W · 0 KM</text>' % (X1, X1))
@@ -272,44 +292,75 @@ def build(frame):
         A('<line x1="%.1f" y1="%d" x2="%.1f" y2="%d" stroke="#000" stroke-width="0.3"/>' % (x, HT + 21, x, HT + 30))
     A('<line x1="%d" y1="%d" x2="%d" y2="%d" stroke="#000" stroke-width="0.4"/>' % (X0, HT + 21, X1, HT + 21))
 
-    # Bryan 11/07 21:19-21:2x: the paper is gone; the datasets are bands whose thickness is records per year (linear),
-    # the records strip folded into them ("collapse these into 1 diagram"); the bands stretch to fill the height
+    # Bryan 11/07: the paper is gone (21:19); the lanes fill the height (21:20); the datasets are one Sankey (21:3x):
+    # width = specimens so far (cumulative, linear), the flows stacked edge to edge, flush at the hand, the 1906 fire a loss
     EVENTS = [('1853 · FOUNDED · DOWNTOWN SAN FRANCISCO', 1853.3, None), ('GALAPAGOS · JUN 1905 – NOV 1906 · %s KM · 4,568 SPECIMENS' % format(int(round(GAL_KM, -2)), ','), 1905.45, 1906.9),
               ('1906 · EARTHQUAKE AND FIRE · THE COLLECTION LOST', 1906.3, None), ('1989 · LOMA PRIETA · %d KM' % round(LOMA_KM), 1989.8, None), ('2008 · THE PIANO BUILDING OPENS', 2008.8, None)]
-    TOP, FOOT, HDR, GAP = HT + 46, 980, 22, 6
+    TOP, FOOT, HDR, GAP, RO = HT + 46, 980, 22, 6, 12.5
+    flows = sk_flows(B)
     if B:
-        groups = [("EVENTS · THE ACADEMY'S OWN RECORD", 'ev', [EVENTS[1]]), ('AT THE BUILDING · 0 KM', 'birds', [('THE BUILDING · 692 WINDOW-STRIKE BIRDS · 2008–2022', BUILDING_BIRDS)])]
-        RO = min(220, (FOOT - TOP - (HDR + GAP) * 2) / 2)
-        S = RO * 0.85 / 3045.0                  # one linear scale: specimens per year -> px (Galapagos 4,568 over 1.5 years)
+        groups = [("EVENTS · THE ACADEMY'S OWN RECORD", 'ev', [EVENTS[1]]), ('THE TWO ZEROS · SPECIMENS SO FAR', 'sk', flows)]
     else:
-        groups = [("EVENTS · THE ACADEMY'S OWN RECORD", 'ev', EVENTS), ('DATASETS · GBIF · RECORDS PER YEAR', 'ds', DATASETS), ('SERIES', 'bar', SERIES),
+        groups = [("EVENTS · THE ACADEMY'S OWN RECORD", 'ev', EVENTS), ('DATASETS · GBIF · SPECIMENS SO FAR', 'sk', flows), ('SERIES', 'bar', SERIES),
                   ('COLLECTIONS · OAC FINDING AIDS', 'bar', COLLECTIONS), ('BUILDINGS', 'bar', BUILDINGS), ('PEOPLE', 'bar', PEOPLE)]
-        RO = 12.5                               # plain rows
-        rest = FOOT - TOP - (HDR + GAP) * len(groups) - RO * sum(len(g[2]) for g in groups if g[1] != 'ds')
-        peak = [max(rate(yv, n, s, e) for yv in range(s, min(e, 2026) + 1)) for _, n, s, e, _ in DATASETS]
-        MINR = 12.5                             # a row never shorter than its label
-        S = (rest - 3.5 * len(DATASETS)) / sum(peak)     # stretch: the bands take all the room left
-        for _ in range(40): S *= rest / sum(max(S * pk + 3.5, MINR) for pk in peak)
+    rest = FOOT - TOP - (HDR + GAP) * len(groups) - RO * sum(len(g[2]) for g in groups if g[1] != 'sk')
+    FIRE = 1906.3
     y0 = TOP
     for title, kind, rows in groups:
         A('<text class="ln" x="%d" y="%.1f">%s</text>' % (X0 - 6, y0 + 8, title))
         y0 += HDR
+        if kind == 'sk':
+            # cumulative per flow, split at the fire: lost = what was collected before 1905; the rest survives
+            ts = [t for t in range(1850, YEAR + 1)]
+            ts = sorted(set(ts + [FIRE - 0.001, FIRE]))
+            def cum(f, t, part):
+                lab, n, rf, s = f
+                lo, hi = (s, 1904) if part == 'lost' else (max(s, 1905), YEAR)
+                if part == 'lost' and t >= FIRE: return 0.0
+                return sum(rf(v) for v in range(lo, min(int(t), hi) + 1)) if t >= lo else 0.0
+            peak = sum(n - sum(f[2](v) for v in range(f[3], 1905)) for f in rows for n in [f[1]])
+            prepeak = max(sum(cum(f, FIRE - 0.001, 'lost') + cum(f, FIRE - 0.001, 'surv') for f in rows), 1)
+            S = rest / max(peak, prepeak)
+            edges = []                           # per flow: (lost top, lost bottom = surv top, surv bottom) at each t
+            for t in ts:
+                y = y0; row = []
+                for f in rows:
+                    l = S * cum(f, t, 'lost'); sv = S * cum(f, t, 'surv')
+                    row.append((y, y + l, y + l + sv)); y += l + sv
+                edges.append(row)
+            P = lambda pts: 'L'.join('%.1f,%.1f' % p for p in pts)
+            for i, f in enumerate(rows):
+                pre = [(X(t + 1) if t != FIRE - 0.001 and t != FIRE else X(t), edges[j][i]) for j, t in enumerate(ts)]
+                # the surviving flow
+                top = [(x, e[1]) for x, e in pre]; bot = [(x, e[2]) for x, e in pre][::-1]
+                A('<path d="M%sZ" fill="#000"/>' % P(top + bot))
+                # the lost branch, flush at the red rule
+                lp = [(x, e) for (x, e), t in zip(pre, ts) if t < FIRE]
+                if lp and lp[-1][1][1] - lp[-1][1][0] > 0.05:
+                    A('<path d="M%sZ" fill="#000"/>' % P([(x, e[0]) for x, e in lp] + [(x, e[1] - 0.35) for x, e in lp][::-1]))
+            # loss label, at the rule
+            lost = sum(cum(f, FIRE - 0.001, 'lost') for f in rows)
+            if lost > 0:
+                A('<text class="ev" x="%.1f" y="%.1f" style="text-anchor:end">LOST IN THE FIRE · %s</text>' % (X(FIRE) - 5, edges[ts.index(FIRE - 0.001)][-1][2] + 10, format(int(round(lost, -3)), ',')))
+            # labels at the flush end, fanned apart with leaders
+            xe = X(YEAR + 1)
+            ends = [((e[1] + e[2]) / 2, f) for e, f in zip(edges[-1], rows)]
+            ly = [m for m, _ in ends]
+            for _ in range(200):
+                for j in range(1, len(ly)):
+                    if ly[j] - ly[j - 1] < 11: ly[j] = ly[j - 1] + 11
+                over = ly[-1] - (y0 + rest)
+                if over > 0: ly = [v - over for v in ly]
+                for j in range(len(ly) - 2, -1, -1):
+                    if ly[j + 1] - ly[j] < 11: ly[j] = ly[j + 1] - 11
+            lx = xe + 34
+            for (m, f), yl in zip(ends, ly):
+                lab, n, _, _ = f
+                A('<path d="M%.1f,%.1fL%.1f,%.1fL%.1f,%.1f" fill="none" stroke="#000" stroke-width="0.5"/>' % (xe + 2, m, xe + 14, m, lx - 4, yl))
+                A('<text class="bl" x="%.1f" y="%.1f" style="text-anchor:start">%s · <tspan class="tot">%s</tspan></text>' % (lx, yl + 3, lab, format(n, ',')))
+            y0 += rest + GAP
+            continue
         for row in rows:
-            if kind == 'ds':
-                lab, n, s, e, run = row
-                th = [(yv, S * rate(yv, n, s, e)) for yv in range(s, min(e, 2026) + 1)]
-                h = max(max(t for _, t in th) + 3.5, MINR)
-                cy = y0 + h / 2
-                top = [(X(yv), cy - t / 2) for yv, t in th] + [(X(th[-1][0] + 1), cy - th[-1][1] / 2)]
-                bot = [(X(yv + 1), cy + t / 2) for yv, t in th][::-1] + [(X(th[0][0]), cy + th[0][1] / 2)]
-                A('<path d="M%sZ" fill="#000"/>' % 'L'.join('%.1f,%.1f' % p for p in top + bot))
-                xe, te = X(th[-1][0] + 1), max(th[-1][1] / 2, 0.6)
-                if run:
-                    A('<path d="M%.1f,%.1fL%.1f,%.1fL%.1f,%.1fZ" fill="#000"/>' % (xe, cy - te, xe + 26, cy, xe, cy + te)); xe += 26
-                A('<text class="bl" x="%.1f" y="%.1f">%s</text>' % (X(s) - 5, cy + 3, lab))
-                A('<text class="tot" x="%.1f" y="%.1f">%s</text>' % (xe + 6, cy + 3.5, format(n, ',')))
-                y0 += h
-                continue
             h = RO; cy = y0 + h / 2
             if kind == 'ev':
                 lab, s, e = row
@@ -317,15 +368,8 @@ def build(frame):
                     A('<circle cx="%.1f" cy="%.1f" r="3.4" fill="%s"/>' % (X(s), cy, RED))
                     lx, anc = (X(s) + 7, 'start') if s < 1980 else (X(s) - 7, 'end')
                 else:
-                    t = max(6.4, S * 4568 / 1.45) if B else 6.4
-                    A('<rect x="%.1f" y="%.1f" width="%.1f" height="%.1f" fill="%s"/>' % (X(s), cy - t / 2, X(e) - X(s), t, RED)); lx, anc = X(e) + 6, 'start'
+                    A('<rect x="%.1f" y="%.1f" width="%.1f" height="6.4" fill="%s"/>' % (X(s), cy - 3.2, X(e) - X(s), RED)); lx, anc = X(e) + 6, 'start'
                 A('<text class="ev big" x="%.1f" y="%.1f" style="text-anchor:%s">%s</text>' % (lx, cy + 3, anc, lab))
-            elif kind == 'birds':
-                lab, d = row
-                for yv, c in sorted(d.items()):
-                    t = max(0.8, S * c)
-                    A('<rect x="%.2f" y="%.2f" width="%.2f" height="%.2f" fill="#000"/>' % (X(yv), cy - t / 2, X(yv + 1) - X(yv), t))
-                A('<text class="bl" x="%.1f" y="%.1f">%s</text>' % (X(min(d)) - 5, cy + 3, lab))
             else:
                 lab, s, e, run = row
                 A('<rect x="%.1f" y="%.1f" width="%.1f" height="5.6" fill="#000"/>' % (X(s), cy - 2.8, X(min(e, 2029) + 1) - X(s)))
