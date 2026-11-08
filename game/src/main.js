@@ -11,6 +11,7 @@ import { buildDiver } from './diver.js';
 import { buildPlaques } from './plaques.js';
 import { buildDiscovery } from './discovery.js';
 import { loadWarehouseModel } from './model.js';
+import { loadProps, makeFlythrough, PROPS } from './props.js';
 
 const canvas = document.getElementById('c');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer: true });
@@ -27,7 +28,7 @@ const fill = new THREE.PointLight(0x7fd0ff, 0.6, 120, 1.5); fill.position.set(0,
 const sky = new THREE.Mesh(new THREE.SphereGeometry(1200, 24, 12), new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, uniforms: {}, vertexShader: 'varying vec3 vP; void main(){ vP=position; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);} ', fragmentShader: 'varying vec3 vP; void main(){ float h = normalize(vP).y; vec3 c = mix(vec3(0.10,0.07,0.12), vec3(0.02,0.03,0.07), clamp(h*2.0,0.0,1.0)); c = mix(vec3(0.45,0.22,0.18), c, clamp(h*6.0+0.2,0.0,1.0)); gl_FragColor=vec4(c,1.0);} ' })); scene.add(sky);
 
 const hud = document.getElementById('hud'), help = document.getElementById('help'), clickEl = document.getElementById('click');
-help.textContent = `WASD swim/walk · mouse look · Space up · Shift down · E sprint / ride lift up · Q lift down
+help.textContent = `K fly through the nearest exhibit scan · WASD swim/walk · mouse look · Space up · Shift down · E sprint / ride lift up · Q lift down
 F flood / drain · 1 2 3 water presets · D dome view · G registration grid · T tilt ± · P save 4K domemaster
 M flood-zone map · N lidar grid · H hide help`;
 
@@ -59,6 +60,7 @@ addEventListener('keydown', (e) => {
   if (e.code === 'KeyP') dome.capture(4096);
   if (e.code === 'KeyM') map.toggle();
   if (e.code === 'KeyN') { gridOn = !gridOn; site.setGrid(gridOn ? 0.35 : 0); }
+  if (e.code === 'KeyK') { if (fly.active) fly.stop(); else { let best = null, bd = 1e9; for (const p of loadedProps) { const d = p.box.getCenter(new THREE.Vector3()).distanceTo(camera.position); if (d < bd) { bd = d; best = p; } } fly.start(best); } }
   if (e.code === 'KeyH') { showHelp = !showHelp; help.style.display = showHelp ? '' : 'none'; }
 });
 // URL params for headless tests: ?water=9&pos=x,y,z&look=x,y,z&dome=1&grid=1&map=1
@@ -71,13 +73,15 @@ if (q.get('grid') === '1') dome.state.gridMix = 0.85;
 if (q.get('map') === '1') map.toggle();
 if (q.has('tilt')) dome.state.tiltDeg = parseFloat(q.get('tilt'));
 if (q.get('model') === '1') loadWarehouseModel(scene);
+const loadedProps = await loadProps(scene, (p) => console.log('prop', p.name));
+const fly = makeFlythrough(camera);
 if (q.get('nohud') === '1') { hud.style.display = 'none'; help.style.display = 'none'; clickEl.style.display = 'none'; document.getElementById('title').style.display = 'none'; }
 
 const clock = new THREE.Clock(); let acc = 0;
 function frame() {
   const dt = Math.min(clock.getDelta(), 0.05); const t = clock.elapsedTime;
   camera.position.y -= prevBreath;            // remove last frame's breath offset before physics
-  const ps = player.update(dt, water);
+  const ps = fly.active ? (fly.update(dt), player.state) : player.update(dt, water);
   const env = water.update(dt, t, camera.position, !!ps.zone);
   const moving = prevPos.distanceTo(camera.position) / Math.max(dt, 1e-3) > 0.35; prevPos.copy(camera.position);
   const plaque = plaques.update(camera, moving);

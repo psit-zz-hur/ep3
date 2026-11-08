@@ -3,3 +3,5 @@ package-lock.json
 assets/cas_3dwarehouse.glb
 assets/*.kmz
 assets/*.skp
+assets/props/*.glb
+assets/props/*.zip
