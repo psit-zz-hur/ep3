@@ -22,6 +22,7 @@ switched and warped (sphere-inverted "planet", exotic cameras) in a Three.js exp
 | 13-game-precedents.md | 25 games to learn from |
 | 14-water-rendering-web-ocean.md | web-ocean assessment |
 | 15-cal-academy-public-datasets.md | Census of every public Academy dataset/API/archive, ranked top 10 for a viz demo |
+| 15b-cal-academy-building-anchored-datasets.md | Live-tested companion to 15: 50 datasets, the 1,071 specimens collected at the building, Galápagos 1905-06 slice, iNat place IDs, deposits (Zenodo/Dryad/NCBI), IA journals, GitHub orgs, DataSF; building-anchored top 10 + fetch recipes |
 | scripts/ | EPT lidar fetch + DSM/roof render scripts used to make renders/ |
 | renders/ | Lidar DSM hillshade, oblique point cloud, roof close-up, 1 m roof contours, OSM map |
 | laptop-bootstrap.sh | Pulls the public-domain / open data into ./data on the laptop |
