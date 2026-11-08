@@ -44,7 +44,13 @@ If Scaniverse "Save raw data" was on: `descaniverse` can pull frames + poses fro
 | research/cal-academy/contact-sheets/ | lidar, interiors, 3D assets, precedents, sock renders |
 | game/ | the prototype; README.md documents every module and key |
 
-## 5. Open work, in order
+## 5. In flight at handoff time
+A research agent is compiling a census of every public dataset the Academy hosts (collections portals, GBIF/iDigBio,
+research deposits, iNaturalist, planetarium assets, archives, live feeds, GitHub). It lands as
+`research/cal-academy/15-cal-academy-public-datasets.md` with a ranked top-10 for a visualization demo. If this file is
+missing when you read this, the agent had not finished; re-run the brief in `research/cal-academy/00-README.md`.
+
+## 6. Open work, in order
 1. Splat loader (Spark) + registration to the lidar frame.
 2. Skate physics against the SDF (port `map()` from poolskin.js to JS for the player collider; transitions, airs).
 3. BIM-grade mezzanine, bridges and rainforest ramp from the Fondazione sections (drawing-336/328/279 PDFs).
@@ -52,7 +58,7 @@ If Scaniverse "Save raw data" was on: `descaniverse` can pull frames + poses fro
 5. Water: port JONSWAP displacement + LEAN glitter from web-ocean into `water.js`.
 6. Replace approximate interior positions with measured ones from the scans.
 
-## 6. Known rough edges
+## 7. Known rough edges
 - Swiftshader screenshots are slow; on the laptop GPU the game should run at 60 fps at 1080p.
 - `poolskin.js` SDF has ~40 primitives; keep raymarch steps at 160, or lower `faceRes` in dome mode.
 - Commons/Wikipedia APIs rate-limit scripted fetches; pace them.
