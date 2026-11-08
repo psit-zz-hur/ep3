@@ -13,7 +13,9 @@ import { buildDiscovery } from './discovery.js';
 import { loadWarehouseModel } from './model.js';
 import { loadProps, makeFlythrough, PROPS } from './props.js';
 import { buildPoolSkin } from './poolskin.js';
+import { buildSplats } from './splats.js';
 
+const q0 = new URLSearchParams(location.search);
 const canvas = document.getElementById('c');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer: true });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.setSize(innerWidth, innerHeight); renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.1;
@@ -31,7 +33,7 @@ const sky = new THREE.Mesh(new THREE.SphereGeometry(1200, 24, 12), new THREE.Sha
 const hud = document.getElementById('hud'), help = document.getElementById('help'), clickEl = document.getElementById('click');
 help.textContent = `O skin on/off · I tile/concrete · J Skateboard Saturdays · [ ] skin line · - = fillet radius (6 in) · , . tile size · K fly through the nearest exhibit scan · WASD swim/walk · mouse look · Space up · Shift down · E sprint / ride lift up · Q lift down
 F flood / drain · 1 2 3 water presets · D dome view · G registration grid · T tilt ± · P save 4K domemaster
-M flood-zone map · N lidar grid · H hide help`;
+M flood-zone map · N lidar grid · V splats (Scaniverse) · X planet warp · Shift+X next planet · H hide help`;
 
 const site = await buildSite(scene);
 const interior = buildInterior(scene);
@@ -40,6 +42,7 @@ const fish = await buildFish(scene);
 const player = buildPlayer(camera, renderer.domElement, site);
 const dome = buildDome(renderer, scene, camera, { faceRes: 1024, outRes: 2048 });
 const pool = buildPoolSkin(scene, camera);
+const splats = await buildSplats(renderer, scene, site.meta, { visible: q0.get('splats') !== '0' });
 let skate = false;
 function setSkate(on) {
   // Skateboard Saturdays: drained, smooth concrete sock to the ceiling, mushroom columns, whale lowered to the floor as a rib-cage arch
@@ -81,6 +84,8 @@ addEventListener('keydown', (e) => {
   if (e.code === 'Period') pool.setTileSize(pool.tileSize * 1.25);
   if (e.code === 'Comma') pool.setTileSize(pool.tileSize / 1.25);
   if (e.code === 'KeyH') { showHelp = !showHelp; help.style.display = showHelp ? '' : 'none'; }
+  if (e.code === 'KeyV') splats.toggle();
+  if (e.code === 'KeyX') { if (e.shiftKey) { splats.setPlanet(splats.state.planet + 1); splats.state.warp = true; } else splats.toggleWarp(); }
 });
 // URL params for headless tests: ?water=9&pos=x,y,z&look=x,y,z&dome=1&grid=1&map=1
 const q = new URLSearchParams(location.search);
@@ -94,6 +99,7 @@ if (q.has('tilt')) dome.state.tiltDeg = parseFloat(q.get('tilt'));
 if (q.get('model') === '1') loadWarehouseModel(scene);
 if (q.get('pool') === '1') pool.state.enabled = true;
 if (q.get('skate') === '1') setSkate(true);
+if (q.get('planet') != null && q.get('planet') !== '0') { splats.setPlanet((parseInt(q.get('planet'), 10) || 1) - 1); splats.state.warp = true; }
 if (q.get('skin') === 'concrete') pool.setMode(1);
 if (q.get('pooldebug') === '1') pool.uniforms.uDebug.value = 1;
 if (q.has('tiletop')) pool.setTileTop(parseFloat(q.get('tiletop')));
@@ -123,14 +129,15 @@ function frame() {
   // dive porthole markers pulse
   interior.markers.forEach((m, i) => m.scale.setScalar(1 + 0.08 * Math.sin(t * 2 + i)));
   pool.update(t, water.state.level, scene.fog, env.wet ? env.layer.light : 1.0);
+  splats.update(dt);
   if (dome.state.enabled) dome.render(); else renderer.render(scene, camera);
   acc += dt; if (acc > 0.1) {
     acc = 0; const p = camera.position; const lay = env.wet ? env.layer.name : (ps.zone ? `DRY · ${ps.zone}${ps.zone === 'airlock' ? ' · ' + al.phase : ''}` : 'AIR · ' + (p.y > L.levels.roofSlab ? 'roof' : 'inside'));
     const near = fish.nearby(p, 12); const nearTxt = Object.entries(near).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([n, c]) => `${c} ${n}`).join(' · ');
-    hud.textContent = `water ${water.state.level.toFixed(1)} m  depth ${env.wet ? (water.state.level - p.y).toFixed(1) : '0.0'} m\n${lay}\nxyz ${p.x.toFixed(0)} ${p.y.toFixed(1)} ${p.z.toFixed(0)}${pool.state.enabled ? `\n${pool.mode > 0.5 ? 'CONCRETE SOCK' : 'TILE SOCK'} · line ${pool.tileTop.toFixed(1)} m · fillet ${(pool.fillet / 0.3048).toFixed(1)} ft · tile ${(pool.tileSize * 100).toFixed(0)} cm` : ''}${dome.state.enabled ? `\nDOME 180° · tilt ${dome.state.tiltDeg}° · grid ${dome.state.gridMix ? 'on' : 'off'}` : ''}${nearTxt ? '\n' + nearTxt : ''}`;
+    hud.textContent = `water ${water.state.level.toFixed(1)} m  depth ${env.wet ? (water.state.level - p.y).toFixed(1) : '0.0'} m\n${lay}\nxyz ${p.x.toFixed(0)} ${p.y.toFixed(1)} ${p.z.toFixed(0)}${pool.state.enabled ? `\n${pool.mode > 0.5 ? 'CONCRETE SOCK' : 'TILE SOCK'} · line ${pool.tileTop.toFixed(1)} m · fillet ${(pool.fillet / 0.3048).toFixed(1)} ft · tile ${(pool.tileSize * 100).toFixed(0)} cm` : ''}${dome.state.enabled ? `\nDOME 180° · tilt ${dome.state.tiltDeg}° · grid ${dome.state.gridMix ? 'on' : 'off'}` : ''}${splats.count() ? `\nSPLATS ${splats.state.visible ? splats.count() + ' scans' : 'off'}${splats.state.warpMix > 0.01 ? ' · ' + splats.planet().name + ' ' + Math.round(splats.state.warpMix * 100) + '%' : ''}` : ''}${nearTxt ? '\n' + nearTxt : ''}`;
     if (map.visible()) map.draw(p, water.state.level);
   }
   requestAnimationFrame(frame);
 }
 frame();
-window.__fs = { scene, camera, water, dome, player, fish, L, pool, renderer };
+window.__fs = { scene, camera, water, dome, player, fish, L, pool, renderer, splats };

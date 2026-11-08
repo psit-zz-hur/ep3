@@ -50,8 +50,20 @@ research deposits, iNaturalist, planetarium assets, archives, live feeds, GitHub
 `research/cal-academy/15-cal-academy-public-datasets.md` with a ranked top-10 for a visualization demo. If this file is
 missing when you read this, the agent had not finished; re-run the brief in `research/cal-academy/00-README.md`.
 
+## 5b. Laptop state (7 Nov 2026, evening; this clone lives at Documents\Claude\ep3, git-ignored by the workspace repo)
+- three r170 -> r187 and Spark 2.4 are vendored (`game/vendor/`); importmap has `@sparkjsdev/spark`. Runs on the laptop's
+  Intel Arc at 35-45 fps at 1024x768 (not the 60 fps hoped for; it is an iGPU).
+- `game/src/splats.js` is written: Spark `SplatMesh` per scan from `game/assets/splats/manifest.json`, frames `game` /
+  `utm10n` (site_meta transform) / `scan` (guess + in-game nudge), sphere-inversion planet warp as a dyno
+  `objectModifier` (centre, radius, mix uniforms; three presets). Keys: V splats, X warp, Shift+X next planet;
+  `?splats=0`, `?planet=1..3`; `__fs.splats.nudge()` / `.exportManifest()` for registration by hand.
+- Tested with a synthetic splat of the lidar DSM (`scripts/lidar_to_splat_ply.py`, 189k gaussians, git-ignored):
+  loads, registers at identity on top of the lidar mesh, warps into the little planet. Scaniverse scans not yet exported.
+- `scripts/ingest_captures.py` moves phone exports from Downloads into `captures/<space>/` and stages SPZs for the game.
+- `laptop-bootstrap.sh` run: see `data/cal-academy/` (PDAL clip skipped, PDAL not installed). Sketchfab fetch pending the token.
+
 ## 6. Open work, in order
-1. Splat loader (Spark) + registration to the lidar frame.
+1. ~~Splat loader (Spark)~~ done; registration of the real scans to the lidar frame once they are exported.
 2. Skate physics against the SDF (port `map()` from poolskin.js to JS for the player collider; transitions, airs).
 3. BIM-grade mezzanine, bridges and rainforest ramp from the Fondazione sections (drawing-336/328/279 PDFs).
 4. Fixed-step 4096x4096 domemaster frame capture for the 7thSense Delta; email planet@calacademy.org with a test frame.

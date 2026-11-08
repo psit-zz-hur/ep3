@@ -1,0 +1,64 @@
+{
+ "note": "Scaniverse splats of the Academy interiors. Files are git-ignored (*.spz / *.ply); this manifest is the registration record. frame: game | utm10n | scan. See README.md here.",
+ "scans": [
+  {
+   "space": "lidar_dsm",
+   "file": "lidar_dsm.ply",
+   "frame": "game",
+   "enabled": true,
+   "note": "synthetic: the 0.5 m lidar DSM as gaussians, made by scripts/lidar_to_splat_ply.py; a stand-in to test the loader + warp until the Scaniverse scans land"
+  },
+  {
+   "space": "piazza",
+   "file": "piazza.spz",
+   "frame": "scan",
+   "guess": [
+    0,
+    0,
+    3
+   ],
+   "enabled": true,
+   "captured": "2026-11-07",
+   "app": "Scaniverse splat"
+  },
+  {
+   "space": "steinhart_reef",
+   "file": "steinhart_reef.spz",
+   "frame": "scan",
+   "guess": [
+    -52,
+    -7.6,
+    -22
+   ],
+   "enabled": true,
+   "captured": "2026-11-07",
+   "app": "Scaniverse splat"
+  },
+  {
+   "space": "african_hall",
+   "file": "african_hall.spz",
+   "frame": "scan",
+   "guess": [
+    67,
+    0,
+    -37
+   ],
+   "enabled": true,
+   "captured": "2026-11-07",
+   "app": "Scaniverse splat"
+  },
+  {
+   "space": "living_roof",
+   "file": "living_roof.spz",
+   "frame": "scan",
+   "guess": [
+    0,
+    11.45,
+    3
+   ],
+   "enabled": true,
+   "captured": "2026-11-07",
+   "app": "Scaniverse splat"
+  }
+ ]
+}
